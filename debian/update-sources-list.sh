@@ -79,8 +79,9 @@ log "Using distribution $release."
 log "Writing $outfile."
 
 if [ -f "$outfile" ]; then
-	log "$outfile exists, moving to $outfile.$(date +%s)"
-	mv $outfile $outfile.orig
+    backupOutfile="$outfile.$(date +%s)"
+	log "$outfile exists, backing up to $backupOutfile"
+	mv $outfile $backupOutfile
 fi
 
 stream=","
@@ -116,3 +117,5 @@ IFS=,
         fi
     done
 ) > $outfile
+
+echo "Done."
