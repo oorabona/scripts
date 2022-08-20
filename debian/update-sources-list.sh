@@ -23,7 +23,7 @@ want_contrib=${WANT_CONTRIB:-0}
 outfile="sources.list"
 arch=$(/usr/bin/dpkg --print-architecture)
 
-options="-o a:so:ncuh -l arch:,sources,outfile:,nonfree,contrib,updates,help"
+options="-o a:so:ncuSh -l arch:,sources,outfile:,nonfree,contrib,updates,security,help"
 
 # misc functions
 log()
@@ -61,6 +61,7 @@ while true; do
 	case "$1" in
         -a|--arch) arch=$2; shift 2 ;;
 		-s|--sources) want_sources=1; shift ;;
+        -o|--outfile) outfile="$2"; shift 2 ;;
 		-n|--nonfree) want_nonfree=1; shift ;;
         -c|--contrib) want_contrib=1; shift ;;
         -u|--updates) want_updates=1; shift ;;
