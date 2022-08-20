@@ -21,7 +21,6 @@ want_sources=${WANT_SOURCES:-0}
 want_nonfree=${WANT_NONFREE:-0}
 want_contrib=${WANT_CONTRIB:-0}
 outfile="sources.list"
-release=${1:-$(lsb_release -sc)}
 arch=$(/usr/bin/dpkg --print-architecture)
 
 options="-o a:so:ncuh -l arch:,sources,outfile:,nonfree,contrib,updates,help"
@@ -72,7 +71,9 @@ while true; do
 	esac
 done
 
-# netselect starting
+# check if we have a release codename
+release=${1:-$(lsb_release -sc)}
+
 log "Using distribution $release."
 
 log "Writing $outfile."
