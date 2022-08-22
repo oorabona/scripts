@@ -1,5 +1,5 @@
 #!/bin/bash
-# Update sources.list file properly and easily
+# Update Debian sources.list file properly and easily
 # Heavily inspired by the work of: netselect-apt by Avery Pennarun (https://github.com/apenwarr/netselect)
 
 # Current patterns taken from https://wiki.debian.org/SourcesList
@@ -149,13 +149,17 @@ IFS=,
 			echo -n "$s"
 		fi
 		echo " ${release}${s} main ${extra}"
-		if [ "$want_sources" -eq 1 ]; then
-			echo -n "deb-src ${host}"
-			if [ "$s" = "-security" ]; then
-				echo -n "$s"
-			fi
-			echo " ${release}${s} main ${extra}"
+
+		# If we do not want to add sources, simply comment the line, you never know
+		# when you might want to add them back.
+		if [ "$want_sources" -eq 0 ]; then
+			echo -n "# "
 		fi
+		echo -n "deb-src ${host}"
+		if [ "$s" = "-security" ]; then
+			echo -n "$s"
+		fi
+		echo " ${release}${s} main ${extra}"
 	done
 ) >$outfile
 
