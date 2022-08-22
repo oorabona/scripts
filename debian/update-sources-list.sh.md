@@ -21,7 +21,7 @@ Usage: ./update-sources-list.sh [OPTIONS] [ Release Codename ]
 
 Release Codename is optional and defaults to the current release.
 Otherwise it refers to the release you want to generate the sources.list for.
-e.g. ./update-sources-list.sh jessie
+e.g. ./update-sources-list.sh buster
 e.g. ./update-sources-list.sh stable
 
 Options:
@@ -33,6 +33,7 @@ Options:
    -c, --contrib          Use contributed packages (default: no)
    -u, --updates          Use updates (default: yes)
    -S, --security         Use security updates (default: yes)
+   -b, --backports        Use backports (default: no)
    -h, --help             Display this help
 ```
 
