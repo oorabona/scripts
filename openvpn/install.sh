@@ -227,37 +227,19 @@ function installQuestions() {
 	echo ""
 	echo "What DNS resolvers do you want to use with the VPN?"
 	echo "   1) Current system resolvers (from /etc/resolv.conf)"
-	echo "   2) Self-hosted DNS Resolver (Unbound)"
-	echo "   3) Cloudflare (Anycast: worldwide)"
-	echo "   4) Quad9 (Anycast: worldwide)"
-	echo "   5) Quad9 uncensored (Anycast: worldwide)"
-	echo "   6) FDN (France)"
-	echo "   7) DNS.WATCH (Germany)"
-	echo "   8) OpenDNS (Anycast: worldwide)"
-	echo "   9) Google (Anycast: worldwide)"
-	echo "   10) Yandex Basic (Russia)"
-	echo "   11) AdGuard DNS (Anycast: worldwide)"
-	echo "   12) NextDNS (Anycast: worldwide)"
-	echo "   13) Custom"
-	until [[ $DNS =~ ^[0-9]+$ ]] && [ "$DNS" -ge 1 ] && [ "$DNS" -le 13 ]; do
-		read -rp "DNS [1-12]: " -e -i 11 DNS
-		if [[ $DNS == 2 ]] && [[ -e /etc/unbound/unbound.conf ]]; then
-			echo ""
-			echo "Unbound is already installed."
-			echo "You can allow the script to configure it in order to use it from your OpenVPN clients"
-			echo "We will simply add a second server to /etc/unbound/unbound.conf for the OpenVPN subnet."
-			echo "No changes are made to the current configuration."
-			echo ""
-
-			until [[ $CONTINUE =~ (y|n) ]]; do
-				read -rp "Apply configuration changes to Unbound? [y/n]: " -e CONTINUE
-			done
-			if [[ $CONTINUE == "n" ]]; then
-				# Break the loop and cleanup
-				unset DNS
-				unset CONTINUE
-			fi
-		elif [[ $DNS == "13" ]]; then
+	echo "   2) Cloudflare (Anycast: worldwide)"
+	echo "   3) Quad9 (Anycast: worldwide)"
+	echo "   4) Quad9 uncensored (Anycast: worldwide)"
+	echo "   5) FDN (France)"
+	echo "   6) DNS.WATCH (Germany)"
+	echo "   7) OpenDNS (Anycast: worldwide)"
+	echo "   8) Google (Anycast: worldwide)"
+	echo "   9) AdGuard DNS (Anycast: worldwide)"
+	echo "   10) NextDNS (Anycast: worldwide)"
+	echo "   11) Custom"
+	until [[ $DNS =~ ^[0-9]+$ ]] && [ "$DNS" -ge 1 ] && [ "$DNS" -le 11 ]; do
+		read -rp "DNS [1-11]: " -e -i 1 DNS
+		if [[ $DNS == "11" ]]; then
 			until [[ $DNS1 =~ ^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$ ]]; do
 				read -rp "Primary DNS: " -e DNS1
 			done
@@ -298,7 +280,7 @@ function installQuestions() {
 	echo "Do you want to customize encryption settings?"
 	echo "Unless you know what you're doing, you should stick with the default parameters provided by the script."
 	echo "Note that whatever you choose, all the choices presented in the script are safe. (Unlike OpenVPN's defaults)"
-	echo "See https://github.com/angristan/openvpn-install#security-and-encryption to learn more."
+	echo "See https://github.com/oorabona/scripts/openvpn/README.md#security-and-encryption to learn more."
 	echo ""
 	until [[ $CUSTOMIZE_ENC =~ (y|n) ]]; do
 		read -rp "Customize encryption settings? [y/n]: " -e -i n CUSTOMIZE_ENC
