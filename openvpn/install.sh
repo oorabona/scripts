@@ -516,7 +516,7 @@ function getLatestEasyRSAVersion() {
 }
 
 function installEasyRSA() {
-	local version="${0}"
+	local version="${1}"
 	if [[ -z $version ]]; then
 		version=$(getLatestEasyRSAVersion)
 	fi
