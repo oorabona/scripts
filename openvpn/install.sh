@@ -673,53 +673,43 @@ ifconfig-pool-persist ipp.txt" >>/etc/openvpn/server.conf
 			fi
 		done
 		;;
-	2) # Self-hosted DNS resolver (Unbound)
-		echo 'push "dhcp-option DNS 10.8.0.1"' >>/etc/openvpn/server.conf
-		if [[ $IPV6_SUPPORT == 'y' ]]; then
-			echo 'push "dhcp-option DNS fd42:42:42:42::1"' >>/etc/openvpn/server.conf
-		fi
-		;;
-	3) # Cloudflare
+	2) # Cloudflare
 		echo 'push "dhcp-option DNS 1.0.0.1"' >>/etc/openvpn/server.conf
 		echo 'push "dhcp-option DNS 1.1.1.1"' >>/etc/openvpn/server.conf
 		;;
-	4) # Quad9
+	3) # Quad9
 		echo 'push "dhcp-option DNS 9.9.9.9"' >>/etc/openvpn/server.conf
 		echo 'push "dhcp-option DNS 149.112.112.112"' >>/etc/openvpn/server.conf
 		;;
-	5) # Quad9 uncensored
+	4) # Quad9 uncensored
 		echo 'push "dhcp-option DNS 9.9.9.10"' >>/etc/openvpn/server.conf
 		echo 'push "dhcp-option DNS 149.112.112.10"' >>/etc/openvpn/server.conf
 		;;
-	6) # FDN
+	5) # FDN
 		echo 'push "dhcp-option DNS 80.67.169.40"' >>/etc/openvpn/server.conf
 		echo 'push "dhcp-option DNS 80.67.169.12"' >>/etc/openvpn/server.conf
 		;;
-	7) # DNS.WATCH
+	6) # DNS.WATCH
 		echo 'push "dhcp-option DNS 84.200.69.80"' >>/etc/openvpn/server.conf
 		echo 'push "dhcp-option DNS 84.200.70.40"' >>/etc/openvpn/server.conf
 		;;
-	8) # OpenDNS
+	7) # OpenDNS
 		echo 'push "dhcp-option DNS 208.67.222.222"' >>/etc/openvpn/server.conf
 		echo 'push "dhcp-option DNS 208.67.220.220"' >>/etc/openvpn/server.conf
 		;;
-	9) # Google
+	8) # Google
 		echo 'push "dhcp-option DNS 8.8.8.8"' >>/etc/openvpn/server.conf
 		echo 'push "dhcp-option DNS 8.8.4.4"' >>/etc/openvpn/server.conf
 		;;
-	10) # Yandex Basic
-		echo 'push "dhcp-option DNS 77.88.8.8"' >>/etc/openvpn/server.conf
-		echo 'push "dhcp-option DNS 77.88.8.1"' >>/etc/openvpn/server.conf
-		;;
-	11) # AdGuard DNS
+	9) # AdGuard DNS
 		echo 'push "dhcp-option DNS 94.140.14.14"' >>/etc/openvpn/server.conf
 		echo 'push "dhcp-option DNS 94.140.15.15"' >>/etc/openvpn/server.conf
 		;;
-	12) # NextDNS
+	10) # NextDNS
 		echo 'push "dhcp-option DNS 45.90.28.167"' >>/etc/openvpn/server.conf
 		echo 'push "dhcp-option DNS 45.90.30.167"' >>/etc/openvpn/server.conf
 		;;
-	13) # Custom DNS
+	11) # Custom DNS
 		echo "push \"dhcp-option DNS $DNS1\"" >>/etc/openvpn/server.conf
 		if [[ $DNS2 != "" ]]; then
 			echo "push \"dhcp-option DNS $DNS2\"" >>/etc/openvpn/server.conf
