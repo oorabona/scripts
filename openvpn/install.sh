@@ -1113,11 +1113,11 @@ function resetOpenVPNConfig() {
 function updateEasyRSA() {
 	# Get the latest EasyRSA version
 	LATEST_EASYRSA_VERSION=$(getLatestEasyRSAVersion)
-
 	echo "Found latest EasyRSA version $LATEST_EASYRSA_VERSION."
 
 	# Get the current EasyRSA version
 	CURRENT_EASYRSA_VERSION=$(grep -oP 'set_var EASYRSA_VERSION \K(.*)' /etc/openvpn/easy-rsa/vars)
+	echo "Current EasyRSA version is $CURRENT_EASYRSA_VERSION."
 
 	# Check if EasyRSA is already up to date
 	if [[ $LATEST_EASYRSA_VERSION == $CURRENT_EASYRSA_VERSION ]]; then
@@ -1127,6 +1127,12 @@ function updateEasyRSA() {
 
 	# Download the latest EasyRSA version
 	installEasyRSA "$LATEST_EASYRSA_VERSION"
+
+	# Update version in vars file
+	sed -i "s/set_var EASYRSA_VERSION .*/set_var EASYRSA_VERSION $LATEST_EASYRSA_VERSION/" /etc/openvpn/easy-rsa/vars
+
+	# Tell user that the update was successful
+	echo "EasyRSA updated from $CURRENT_EASYRSA_VERSION to $LATEST_EASYRSA_VERSION."
 }
 
 function manageMenu() {
