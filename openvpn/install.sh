@@ -1152,12 +1152,12 @@ function manageMenu() {
 	2)
 		revokeClient
 		;;
-	3)
-		resetOpenVPNConfig
-		;;
-    4)
+    3)
         updateEasyRSA
         ;;
+	4)
+		resetOpenVPNConfig
+		;;
 	5)
 		exit 0
 		;;
