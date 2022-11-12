@@ -101,7 +101,7 @@ function initialCheck() {
 		echo "TUN is not available"
 		exit 1
 	fi
-    checkOS
+	checkOS
 }
 
 function installQuestions() {
@@ -119,10 +119,10 @@ function installQuestions() {
 	IP=$(ip -4 addr | sed -ne 's|^.* inet \([^/]*\)/.* scope global.*$|\1|p' | head -1)
 
 	if [[ -z $IP ]]; then
-        # Ask for the public IPv4 address if not found
-        until [[ "$IP" =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ ]]; do
-            read -rp "IP address: " -e IP
-        done
+		# Ask for the public IPv4 address if not found
+		until [[ "$IP" =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ ]]; do
+			read -rp "IP address: " -e IP
+		done
 	fi
 	# If $IP is a private IP address, the server must be behind NAT
 	if echo "$IP" | grep -qE '^(10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.|192\.168)'; then
@@ -158,32 +158,32 @@ function installQuestions() {
 		read -rp "Do you want to enable IPv6 support (NAT)? [y/n]: " -i $SUGGESTION -e IPV6_SUPPORT
 	done
 
-    if [[ $IPV6_SUPPORT == "y" ]]; then
-        echo ""
-        echo "I need to know the IPv6 address of the network interface you want OpenVPN listening to."
-        echo "Unless your server is behind NAT, it should be your public IPv6 address."
+	if [[ $IPV6_SUPPORT == "y" ]]; then
+		echo ""
+		echo "I need to know the IPv6 address of the network interface you want OpenVPN listening to."
+		echo "Unless your server is behind NAT, it should be your public IPv6 address."
 
-        # Detect public IPv6 address and pre-fill for the user
-        IP6=$(ip -6 addr | sed -ne 's|^.* inet6 \([^/]*\)/.* scope global.*$|\1|p' | head -1)
+		# Detect public IPv6 address and pre-fill for the user
+		IP6=$(ip -6 addr | sed -ne 's|^.* inet6 \([^/]*\)/.* scope global.*$|\1|p' | head -1)
 
-        if [[ -z $IP6 ]]; then
-            # Ask for the public IPv6 address if not found
-            until [[ "$IP6" =~ ^([a-f0-9]{1,4}:){7}[a-f0-9]{1,4}$ ]]; do
-                read -rp "IPv6 address: " -e IP6
-            done
-        fi
-        # If $IP6 is a private IP address, the server must be behind NAT
-        if echo "$IP6" | grep -qE '^fd'; then
-            echo ""
-            echo "It seems this server is behind NAT. What is its public IPv6 address or hostname?"
-            echo "We need it for the clients to connect to the server."
+		if [[ -z $IP6 ]]; then
+			# Ask for the public IPv6 address if not found
+			until [[ "$IP6" =~ ^([a-f0-9]{1,4}:){7}[a-f0-9]{1,4}$ ]]; do
+				read -rp "IPv6 address: " -e IP6
+			done
+		fi
+		# If $IP6 is a private IP address, the server must be behind NAT
+		if echo "$IP6" | grep -qE '^fd'; then
+			echo ""
+			echo "It seems this server is behind NAT. What is its public IPv6 address or hostname?"
+			echo "We need it for the clients to connect to the server."
 
-            PUBLICIP6=$(curl -s https://api6.ipify.org)
-            until [[ "$ENDPOINT6" != "" ]]; do
-                read -rp "Public IPv6 address or hostname: " -i "$PUBLICIP6" -e ENDPOINT6
-            done
-        fi
-    fi
+			PUBLICIP6=$(curl -s https://api6.ipify.org)
+			until [[ "$ENDPOINT6" != "" ]]; do
+				read -rp "Public IPv6 address or hostname: " -i "$PUBLICIP6" -e ENDPOINT6
+			done
+		fi
+	fi
 
 	echo ""
 	echo "What port do you want OpenVPN to listen to?"
@@ -507,23 +507,23 @@ function installQuestions() {
 }
 
 function getLatestEasyRSAVersion() {
-    LATEST_EASYRSA_VERSION=$(curl -s https://api.github.com/repos/OpenVPN/easy-rsa/releases/latest | grep -oP '"tag_name": "\K(.*)(?=")')
-    if [[ -z $LATEST_EASYRSA_VERSION ]]; then
-        echo "Could not get the latest EasyRSA version."
-        exit 1
-    fi
-    return $LATEST_EASYRSA_VERSION
+	LATEST_EASYRSA_VERSION=$(curl -s https://api.github.com/repos/OpenVPN/easy-rsa/releases/latest | grep -oP '"tag_name": "\K(.*)(?=")')
+	if [[ -z $LATEST_EASYRSA_VERSION ]]; then
+		echo "Could not get the latest EasyRSA version."
+		exit 1
+	fi
+	return $LATEST_EASYRSA_VERSION
 }
 
 function installEasyRSA() {
-    local version="${0}"
-    if [[ -z $version ]]; then
-        version=$(getLatestEasyRSAVersion)
-    fi
-    wget -O ~/easy-rsa.tgz https://github.com/OpenVPN/easy-rsa/releases/download/v${version}/EasyRSA-${version}.tgz
-    mkdir -p /etc/openvpn/easy-rsa
-    tar xzf ~/easy-rsa.tgz --strip-components=1 --directory /etc/openvpn/easy-rsa
-    rm -f ~/easy-rsa.tgz
+	local version="${0}"
+	if [[ -z $version ]]; then
+		version=$(getLatestEasyRSAVersion)
+	fi
+	wget -O ~/easy-rsa.tgz https://github.com/OpenVPN/easy-rsa/releases/download/v${version}/EasyRSA-${version}.tgz
+	mkdir -p /etc/openvpn/easy-rsa
+	tar xzf ~/easy-rsa.tgz --strip-components=1 --directory /etc/openvpn/easy-rsa
+	rm -f ~/easy-rsa.tgz
 }
 
 function installOpenVPN() {
@@ -572,17 +572,17 @@ function installOpenVPN() {
 		fi
 	fi
 
-    # If OpenVPN is not installed, we will not install it, it is up to the user to install it.
+	# If OpenVPN is not installed, we will not install it, it is up to the user to install it.
 	if [[ ! -d /etc/openvpn/ ]]; then
-        echo ""
-        echo "OpenVPN does not seem to be installed. Please install it first."
+		echo ""
+		echo "OpenVPN does not seem to be installed. Please install it first."
 		# An old version of easy-rsa was available by default in some openvpn packages
 		if [[ -d /etc/openvpn/easy-rsa/ ]]; then
-            echo "It looks like you have an old version of easy-rsa installed."
-            echo "You can remove it with this command:"
+			echo "It looks like you have an old version of easy-rsa installed."
+			echo "You can remove it with this command:"
 			echo "rm -rf /etc/openvpn/easy-rsa/"
 		fi
-        exit 1
+		exit 1
 	fi
 
 	# Find out if the machine uses nogroup or nobody for the permissionless group
@@ -594,10 +594,10 @@ function installOpenVPN() {
 
 	# Install the latest version of easy-rsa from source, if not already installed.
 	if [[ ! -d /etc/openvpn/easy-rsa/ ]]; then
-        downloadEasyRSA
+		downloadEasyRSA
 
 		cd /etc/openvpn/easy-rsa/ || return
-        echo "set_var EASYRSA_VERSION ${version}" > vars
+		echo "set_var EASYRSA_VERSION ${version}" > vars
 		case $CERT_TYPE in
 		1)
 			echo "set_var EASYRSA_ALGO ec" >>vars
@@ -1092,8 +1092,8 @@ function resetOpenVPNConfig() {
 		fi
 
 		# Cleanup
-        echo "OVPN profiles will not be removed automatically by this script."
-        echo "If you want to remove them, please do it manually:"
+		echo "OVPN profiles will not be removed automatically by this script."
+		echo "If you want to remove them, please do it manually:"
 		echo "find /home/ -maxdepth 2 -name \"*.ovpn\" -delete"
 		echo "find /root/ -maxdepth 1 -name \"*.ovpn\" -delete"
 		rm -rf /etc/openvpn
@@ -1103,7 +1103,7 @@ function resetOpenVPNConfig() {
 
 		echo ""
 		echo "OpenVPN configuration removed!"
-        echo "The original software as well as its logs have not been removed."
+		echo "The original software as well as its logs have not been removed."
 	else
 		echo ""
 		echo "Removal aborted!"
@@ -1111,22 +1111,22 @@ function resetOpenVPNConfig() {
 }
 
 function updateEasyRSA() {
-    # Get the latest EasyRSA version
-    LATEST_EASYRSA_VERSION=$(getLatestEasyRSAVersion)
+	# Get the latest EasyRSA version
+	LATEST_EASYRSA_VERSION=$(getLatestEasyRSAVersion)
 
-    echo "Found latest EasyRSA version $LATEST_EASYRSA_VERSION."
+	echo "Found latest EasyRSA version $LATEST_EASYRSA_VERSION."
 
-    # Get the current EasyRSA version
-    CURRENT_EASYRSA_VERSION=$(grep -oP 'set_var EASYRSA_VERSION \K(.*)' /etc/openvpn/easy-rsa/vars)
+	# Get the current EasyRSA version
+	CURRENT_EASYRSA_VERSION=$(grep -oP 'set_var EASYRSA_VERSION \K(.*)' /etc/openvpn/easy-rsa/vars)
 
-    # Check if EasyRSA is already up to date
-    if [[ $LATEST_EASYRSA_VERSION == $CURRENT_EASYRSA_VERSION ]]; then
-        echo "EasyRSA is already up to date."
-        exit 0
-    fi
+	# Check if EasyRSA is already up to date
+	if [[ $LATEST_EASYRSA_VERSION == $CURRENT_EASYRSA_VERSION ]]; then
+		echo "EasyRSA is already up to date."
+		exit 0
+	fi
 
-    # Download the latest EasyRSA version
-    installEasyRSA "$LATEST_EASYRSA_VERSION"
+	# Download the latest EasyRSA version
+	installEasyRSA "$LATEST_EASYRSA_VERSION"
 }
 
 function manageMenu() {
@@ -1138,7 +1138,7 @@ function manageMenu() {
 	echo "What do you want to do?"
 	echo "   1) Add a new user"
 	echo "   2) Revoke existing user"
-    echo "   3) Update EasyRSA"
+	echo "   3) Update EasyRSA"
 	echo "   4) Reset OpenVPN configuration"
 	echo "   5) Exit"
 	until [[ $MENU_OPTION =~ ^[1-5]$ ]]; do
@@ -1152,9 +1152,9 @@ function manageMenu() {
 	2)
 		revokeClient
 		;;
-    3)
-        updateEasyRSA
-        ;;
+	3)
+		updateEasyRSA
+		;;
 	4)
 		resetOpenVPNConfig
 		;;
