@@ -120,7 +120,7 @@ function installQuestions() {
 
 	if [[ -z $IP ]]; then
         # Ask for the public IPv4 address if not found
-        until [[ $IP =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ ]]; do
+        until [[ "$IP" =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ ]]; do
             read -rp "IP address: " -e IP
         done
 	fi
@@ -131,8 +131,8 @@ function installQuestions() {
 		echo "We need it for the clients to connect to the server."
 
 		PUBLICIP=$(curl -s https://api.ipify.org)
-		until [[ $ENDPOINT != "" ]]; do
-			read -rp "Public IPv4 address or hostname: " -e -i "$PUBLICIP" ENDPOINT
+		until [[ "$ENDPOINT" != "" ]]; do
+			read -rp "Public IPv4 address or hostname: " -i "$PUBLICIP" -e ENDPOINT
 		done
 	fi
 
@@ -154,7 +154,7 @@ function installQuestions() {
 	fi
 	echo ""
 	# Ask the user if they want to enable IPv6 regardless its availability.
-	until [[ $IPV6_SUPPORT =~ (y|n) ]]; do
+	until [[ "$IPV6_SUPPORT" =~ (y|n) ]]; do
 		read -rp "Do you want to enable IPv6 support (NAT)? [y/n]: " -i $SUGGESTION -e IPV6_SUPPORT
 	done
 
@@ -168,7 +168,7 @@ function installQuestions() {
 
         if [[ -z $IP6 ]]; then
             # Ask for the public IPv6 address if not found
-            until [[ $IP6 =~ ^([a-f0-9]{1,4}:){7}[a-f0-9]{1,4}$ ]]; do
+            until [[ "$IP6" =~ ^([a-f0-9]{1,4}:){7}[a-f0-9]{1,4}$ ]]; do
                 read -rp "IPv6 address: " -e IP6
             done
         fi
@@ -179,8 +179,8 @@ function installQuestions() {
             echo "We need it for the clients to connect to the server."
 
             PUBLICIP6=$(curl -s https://api6.ipify.org)
-            until [[ $ENDPOINT6 != "" ]]; do
-                read -rp "Public IPv6 address or hostname: " -e -i "$PUBLICIP6" ENDPOINT6
+            until [[ "$ENDPOINT6" != "" ]]; do
+                read -rp "Public IPv6 address or hostname: " -i "$PUBLICIP6" -e ENDPOINT6
             done
         fi
     fi
