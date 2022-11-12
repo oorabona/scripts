@@ -553,9 +553,9 @@ function installOpenVPN() {
 	fi
 
     # If OpenVPN is not installed, we will not install it, it is up to the user to install it.
-	if [[ ! -e /etc/openvpn/server.conf ]]; then
+	if [[ ! -d /etc/openvpn/ ]]; then
         echo ""
-        echo "OpenVPN is not installed. Please install it first."
+        echo "OpenVPN does not seem to be installed. Please install it first."
 		# An old version of easy-rsa was available by default in some openvpn packages
 		if [[ -d /etc/openvpn/easy-rsa/ ]]; then
             echo "It looks like you have an old version of easy-rsa installed."
