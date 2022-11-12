@@ -155,7 +155,7 @@ function installQuestions() {
 	echo ""
 	# Ask the user if they want to enable IPv6 regardless its availability.
 	until [[ $IPV6_SUPPORT =~ (y|n) ]]; do
-		read -rp "Do you want to enable IPv6 support (NAT)? [y/n]: " -e -i $SUGGESTION IPV6_SUPPORT
+		read -rp "Do you want to enable IPv6 support (NAT)? [y/n]: " -i $SUGGESTION -e IPV6_SUPPORT
 	done
 
     if [[ $IPV6_SUPPORT == "y" ]]; then
