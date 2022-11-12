@@ -506,6 +506,26 @@ function installQuestions() {
 	fi
 }
 
+function getLatestEasyRSAVersion() {
+    LATEST_EASYRSA_VERSION=$(curl -s https://api.github.com/repos/OpenVPN/easy-rsa/releases/latest | grep -oP '"tag_name": "\K(.*)(?=")')
+    if [[ -z $LATEST_EASYRSA_VERSION ]]; then
+        echo "Could not get the latest EasyRSA version."
+        exit 1
+    fi
+    return $LATEST_EASYRSA_VERSION
+}
+
+function installEasyRSA() {
+    local version="${0}"
+    if [[ -z $version ]]; then
+        version=$(getLatestEasyRSAVersion)
+    fi
+    wget -O ~/easy-rsa.tgz https://github.com/OpenVPN/easy-rsa/releases/download/v${version}/EasyRSA-${version}.tgz
+    mkdir -p /etc/openvpn/easy-rsa
+    tar xzf ~/easy-rsa.tgz --strip-components=1 --directory /etc/openvpn/easy-rsa
+    rm -f ~/easy-rsa.tgz
+}
+
 function installOpenVPN() {
 	if [[ $AUTO_INSTALL == "y" ]]; then
 		# Set default choices so that no questions will be asked.
@@ -574,20 +594,17 @@ function installOpenVPN() {
 
 	# Install the latest version of easy-rsa from source, if not already installed.
 	if [[ ! -d /etc/openvpn/easy-rsa/ ]]; then
-		local version="3.0.7"
-		wget -O ~/easy-rsa.tgz https://github.com/OpenVPN/easy-rsa/releases/download/v${version}/EasyRSA-${version}.tgz
-		mkdir -p /etc/openvpn/easy-rsa
-		tar xzf ~/easy-rsa.tgz --strip-components=1 --directory /etc/openvpn/easy-rsa
-		rm -f ~/easy-rsa.tgz
+        downloadEasyRSA
 
 		cd /etc/openvpn/easy-rsa/ || return
+        echo "set_var EASYRSA_VERSION ${version}" > vars
 		case $CERT_TYPE in
 		1)
-			echo "set_var EASYRSA_ALGO ec" >vars
+			echo "set_var EASYRSA_ALGO ec" >>vars
 			echo "set_var EASYRSA_CURVE $CERT_CURVE" >>vars
 			;;
 		2)
-			echo "set_var EASYRSA_KEY_SIZE $RSA_KEY_SIZE" >vars
+			echo "set_var EASYRSA_KEY_SIZE $RSA_KEY_SIZE" >>vars
 			;;
 		esac
 
@@ -1050,7 +1067,7 @@ function revokeClient() {
 	echo "Certificate for client $CLIENT revoked."
 }
 
-function removeOpenVPN() {
+function resetOpenVPNConfig() {
 	echo ""
 	read -rp "Do you really want to remove OpenVPN config? [y/n]: " -e -i n REMOVE
 	if [[ $REMOVE == 'y' ]]; then
@@ -1093,19 +1110,39 @@ function removeOpenVPN() {
 	fi
 }
 
+function updateEasyRSA() {
+    # Get the latest EasyRSA version
+    LATEST_EASYRSA_VERSION=$(getLatestEasyRSAVersion)
+
+    echo "Found latest EasyRSA version $LATEST_EASYRSA_VERSION."
+
+    # Get the current EasyRSA version
+    CURRENT_EASYRSA_VERSION=$(grep -oP 'set_var EASYRSA_VERSION \K(.*)' /etc/openvpn/easy-rsa/vars)
+
+    # Check if EasyRSA is already up to date
+    if [[ $LATEST_EASYRSA_VERSION == $CURRENT_EASYRSA_VERSION ]]; then
+        echo "EasyRSA is already up to date."
+        exit 0
+    fi
+
+    # Download the latest EasyRSA version
+    installEasyRSA "$LATEST_EASYRSA_VERSION"
+}
+
 function manageMenu() {
 	echo "Welcome to OpenVPN-install!"
-	echo "The git repository is available at: https://github.com/angristan/openvpn-install"
+	echo "The git repository is available at: https://github.com/oorabona/scripts/"
 	echo ""
-	echo "It looks like OpenVPN is already installed."
+	echo "It looks like OpenVPN is already set up."
 	echo ""
 	echo "What do you want to do?"
 	echo "   1) Add a new user"
 	echo "   2) Revoke existing user"
-	echo "   3) Reset OpenVPN configuration"
-	echo "   4) Exit"
-	until [[ $MENU_OPTION =~ ^[1-4]$ ]]; do
-		read -rp "Select an option [1-4]: " MENU_OPTION
+    echo "   3) Update EasyRSA"
+	echo "   4) Reset OpenVPN configuration"
+	echo "   5) Exit"
+	until [[ $MENU_OPTION =~ ^[1-5]$ ]]; do
+		read -rp "Select an option [1-5]: " MENU_OPTION
 	done
 
 	case $MENU_OPTION in
@@ -1116,9 +1153,12 @@ function manageMenu() {
 		revokeClient
 		;;
 	3)
-		removeOpenVPN
+		resetOpenVPNConfig
 		;;
-	4)
+    4)
+        updateEasyRSA
+        ;;
+	5)
 		exit 0
 		;;
 	esac
