@@ -119,12 +119,10 @@ function installQuestions() {
 	IP=$(ip -4 addr | sed -ne 's|^.* inet \([^/]*\)/.* scope global.*$|\1|p' | head -1)
 
 	if [[ -z $IP ]]; then
-		# Detect public IPv6 address
-		IP=$(ip -6 addr | sed -ne 's|^.* inet6 \([^/]*\)/.* scope global.*$|\1|p' | head -1)
-	fi
-	APPROVE_IP=${APPROVE_IP:-n}
-	if [[ $APPROVE_IP =~ n ]]; then
-		read -rp "IP address: " -e -i "$IP" IP
+        # Ask for the public IPv4 address if not found
+        until [[ $IP =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ ]]; do
+            read -rp "IP address: " -e IP
+        done
 	fi
 	# If $IP is a private IP address, the server must be behind NAT
 	if echo "$IP" | grep -qE '^(10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.|192\.168)'; then
@@ -159,6 +157,34 @@ function installQuestions() {
 	until [[ $IPV6_SUPPORT =~ (y|n) ]]; do
 		read -rp "Do you want to enable IPv6 support (NAT)? [y/n]: " -e -i $SUGGESTION IPV6_SUPPORT
 	done
+
+    if [[ $IPV6_SUPPORT == "y" ]]; then
+        echo ""
+        echo "I need to know the IPv6 address of the network interface you want OpenVPN listening to."
+        echo "Unless your server is behind NAT, it should be your public IPv6 address."
+
+        # Detect public IPv6 address and pre-fill for the user
+        IP6=$(ip -6 addr | sed -ne 's|^.* inet6 \([^/]*\)/.* scope global.*$|\1|p' | head -1)
+
+        if [[ -z $IP6 ]]; then
+            # Ask for the public IPv6 address if not found
+            until [[ $IP6 =~ ^([a-f0-9]{1,4}:){7}[a-f0-9]{1,4}$ ]]; do
+                read -rp "IPv6 address: " -e IP6
+            done
+        fi
+        # If $IP6 is a private IP address, the server must be behind NAT
+        if echo "$IP6" | grep -qE '^fd'; then
+            echo ""
+            echo "It seems this server is behind NAT. What is its public IPv6 address or hostname?"
+            echo "We need it for the clients to connect to the server."
+
+            PUBLICIP6=$(curl -s https://api6.ipify.org)
+            until [[ $ENDPOINT6 != "" ]]; do
+                read -rp "Public IPv6 address or hostname: " -e -i "$PUBLICIP6" ENDPOINT6
+            done
+        fi
+    fi
+
 	echo ""
 	echo "What port do you want OpenVPN to listen to?"
 	echo "   1) Default: 1194"
