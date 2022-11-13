@@ -708,7 +708,7 @@ ifconfig-pool-persist ipp.txt" >>/etc/openvpn/server.conf
 
 	# Add block-outside-dns if enabled
 	if [[ $BLOCK_OUTSIDE_DNS == 'y' ]]; then
-		echo "block-outside-dns" >>/etc/openvpn/server.conf
+		echo "push block-outside-dns" >>/etc/openvpn/server.conf
 	fi
 
 	# DNS resolvers
