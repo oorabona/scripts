@@ -588,12 +588,6 @@ function installOpenVPN() {
 	if [[ ! -d /etc/openvpn/ ]]; then
 		echo ""
 		echo "OpenVPN does not seem to be installed. Please install it first."
-		# An old version of easy-rsa was available by default in some openvpn packages
-		if [[ -d /etc/openvpn/easy-rsa/ ]]; then
-			echo "It looks like you have an old version of easy-rsa installed."
-			echo "You can remove it with this command:"
-			echo "rm -rf /etc/openvpn/easy-rsa/"
-		fi
 		exit 1
 	fi
 
@@ -688,7 +682,7 @@ ifconfig-pool-persist ipp.txt" >>/etc/openvpn/server.conf
 	if [[ $CLIENT_TO_CLIENT == 'y' ]]; then
 		echo "client-to-client" >>/etc/openvpn/server.conf
 	fi
-	
+
 	# DNS resolvers
 	case $DNS in
 	0) # Do not push any DNS
