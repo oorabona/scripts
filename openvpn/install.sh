@@ -832,10 +832,6 @@ verb 3" >>/etc/openvpn/server.conf
 		systemctl restart openvpn@server
 	fi
 
-	if [[ $DNS == 2 ]]; then
-		installUnbound
-	fi
-
 	# Add iptables rules in two scripts
 	mkdir -p /etc/iptables
 
