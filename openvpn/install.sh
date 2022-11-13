@@ -226,6 +226,7 @@ function installQuestions() {
 	esac
 	echo ""
 	echo "What DNS resolvers do you want to use with the VPN?"
+	echo "   0) Do not push any DNS server"
 	echo "   1) Current system resolvers (from /etc/resolv.conf)"
 	echo "   2) Cloudflare (Anycast: worldwide)"
 	echo "   3) Quad9 (Anycast: worldwide)"
@@ -237,8 +238,8 @@ function installQuestions() {
 	echo "   9) AdGuard DNS (Anycast: worldwide)"
 	echo "   10) NextDNS (Anycast: worldwide)"
 	echo "   11) Custom"
-	until [[ $DNS =~ ^[0-9]+$ ]] && [ "$DNS" -ge 1 ] && [ "$DNS" -le 11 ]; do
-		read -rp "DNS [1-11]: " -e -i 1 DNS
+	until [[ $DNS =~ ^[0-9]+$ ]] && [ "$DNS" -ge 0 ] && [ "$DNS" -le 11 ]; do
+		read -rp "DNS [0-11]: " -e -i 1 DNS
 		if [[ $DNS == "11" ]]; then
 			until [[ $DNS1 =~ ^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$ ]]; do
 				read -rp "Primary DNS: " -e DNS1
@@ -674,6 +675,8 @@ ifconfig-pool-persist ipp.txt" >>/etc/openvpn/server.conf
 
 	# DNS resolvers
 	case $DNS in
+	0) # Do not push any DNS
+		;;
 	1) # Current system resolvers
 		# Locate the proper resolv.conf
 		# Needed for systems running systemd-resolved
