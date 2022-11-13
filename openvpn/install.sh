@@ -263,6 +263,28 @@ function installQuestions() {
 		fi
 	done
 	echo ""
+	echo "Do you want to block outside DNS requests?"
+	echo "This will prevent clients from using the DNS of their ISP, and force them to use the DNS of the VPN."
+	echo "This can be useful to protect your privacy, but may break some applications."
+	until [[ "$BLOCK_OUTSIDE_DNS" =~ (y|n) ]]; do
+		read -rp "Block outside DNS requests? [y/n]: " -e BLOCK_OUTSIDE_DNS
+	done
+
+	# Warn if the user wants to block outside dns while not having any dns server pushed
+	if [[ "$BLOCK_OUTSIDE_DNS" == "y" ]] && [[ "$DNS" == "0" ]]; then
+		echo ""
+		echo "You have chosen to block outside DNS requests, but you have not chosen to push any DNS server!"
+		echo "This will probably not work as expected!"
+		echo ""
+		until [[ "$CONTINUE" =~ (y|n) ]]; do
+			read -rp "Are you sure you want to proceed with the current configuration? [y/n]: " -i n -e CONTINUE
+		done
+		if [[ "$CONTINUE" == "n" ]]; then
+			exit 1
+		fi
+	fi
+
+	echo ""
 	echo "Do you want to use compression? It is not recommended since the VORACLE attack makes use of it."
 	until [[ $COMPRESSION_ENABLED =~ (y|n) ]]; do
 		read -rp"Enable compression? [y/n]: " -e -i n COMPRESSION_ENABLED
@@ -552,6 +574,7 @@ function installOpenVPN() {
 		PASS=${PASS:-1}
 		CONTINUE=${CONTINUE:-y}
 		CLIENT_TO_CLIENT=${CLIENT_TO_CLIENT:-n}
+		BLOCK_OUTSIDE_DNS=${BLOCK_OUTSIDE_DNS:-y}
 
 		# Behind NAT, we'll default to the publicly reachable IPv4/IPv6.
 		if [[ $IPV6_SUPPORT == "y" ]]; then
@@ -681,6 +704,11 @@ ifconfig-pool-persist ipp.txt" >>/etc/openvpn/server.conf
 	# Add client-to-client if enabled
 	if [[ $CLIENT_TO_CLIENT == 'y' ]]; then
 		echo "client-to-client" >>/etc/openvpn/server.conf
+	fi
+
+	# Add block-outside-dns if enabled
+	if [[ $BLOCK_OUTSIDE_DNS == 'y' ]]; then
+		echo "block-outside-dns" >>/etc/openvpn/server.conf
 	fi
 
 	# DNS resolvers
