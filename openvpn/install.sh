@@ -186,6 +186,16 @@ function installQuestions() {
 	fi
 
 	echo ""
+	echo "Do you want to enable client-to-client traffic?"
+	echo "This will allow clients to communicate with each other without going through the server."
+	echo "It is recommended to enable this if you are using a VPN for games."
+	echo "Otherwise, leave it disabled."
+	echo ""
+	until [[ "$CLIENT_TO_CLIENT" =~ (y|n) ]]; do
+		read -rp "Enable client-to-client traffic? [y/n]: " -e CLIENT_TO_CLIENT
+	done
+	
+	echo ""
 	echo "What port do you want OpenVPN to listen to?"
 	echo "   1) Default: 1194"
 	echo "   2) Custom"
@@ -541,6 +551,7 @@ function installOpenVPN() {
 		CLIENT=${CLIENT:-client}
 		PASS=${PASS:-1}
 		CONTINUE=${CONTINUE:-y}
+		CLIENT_TO_CLIENT=${CLIENT_TO_CLIENT:-n}
 
 		# Behind NAT, we'll default to the publicly reachable IPv4/IPv6.
 		if [[ $IPV6_SUPPORT == "y" ]]; then
@@ -673,6 +684,11 @@ topology subnet
 server 10.8.0.0 255.255.255.0
 ifconfig-pool-persist ipp.txt" >>/etc/openvpn/server.conf
 
+	# Add client-to-client if enabled
+	if [[ $CLIENT_TO_CLIENT == 'y' ]]; then
+		echo "client-to-client" >>/etc/openvpn/server.conf
+	fi
+	
 	# DNS resolvers
 	case $DNS in
 	0) # Do not push any DNS
