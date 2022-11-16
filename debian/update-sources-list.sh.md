@@ -2,18 +2,18 @@
 
 Update the sources.list file for the current distribution.
 
-# Installation
+## Installation
 
 No special need to install this script per se.
 You can directly run from `curl` as follows:
 
 ```bash
-$ bash <(curl -sL https://raw.githubusercontent.com/oorabona/scripts/master/debian/update-sources-list.sh) -s -c -n stable
+bash <(curl -sL https://raw.githubusercontent.com/oorabona/scripts/master/debian/update-sources-list.sh) -s -c -n stable
 ```
 
 See the options just below.
 
-# Help
+## Help
 
 ```bash
 $ ./update-sources-list.sh -h
