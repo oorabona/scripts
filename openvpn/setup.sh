@@ -549,7 +549,7 @@ function installQuestions() {
 }
 
 function getLatestEasyRSAVersion() {
-	LATEST_EASYRSA_VERSION=$(curl -s https://api.github.com/repos/OpenVPN/easy-rsa/releases/latest | sed -n 's/.*"tag_name": *"\([^"]*\)".*/\1/p')
+	LATEST_EASYRSA_VERSION=$(curl -s https://api.github.com/repos/OpenVPN/easy-rsa/releases/latest | sed -n 's/.*"tag_name": *"v\([^"]*\)".*/\1/p')
 	if [[ -z $LATEST_EASYRSA_VERSION ]]; then
 		echo "Could not get the latest EasyRSA version."
 		exit 1
