@@ -565,7 +565,7 @@ function installEasyRSA() {
 	wget -O ~/easy-rsa.tgz https://github.com/OpenVPN/easy-rsa/releases/download/v${version}/EasyRSA-${version}.tgz \
 	&& mkdir -p /etc/openvpn/easy-rsa \
 	&& tar xzf ~/easy-rsa.tgz --strip-components=1 --directory /etc/openvpn/easy-rsa \
-	&& rm -f ~/easy-rsa.tgz || echo "Could not download EasyRSA." && exit 1
+	&& rm -f ~/easy-rsa.tgz || (echo "Could not download EasyRSA." && exit 1)
 }
 
 function installOpenVPN() {
@@ -1167,28 +1167,25 @@ function updateEasyRSA() {
 	# Get the current EasyRSA version
 	# We cannot use grep -Po because it's not available on all systems, use sed instead
 	# First, check if we currently have a folder /etc/openvpn/easy-rsa
+	CURRENT_EASYRSA_VERSION="unknown"
 	if [[ -d /etc/openvpn/easy-rsa ]]; then
 		# If we have a folder, check if it contains the file vars
 		if [[ -f /etc/openvpn/easy-rsa/vars ]]; then
 			# If we have the file vars, get the version from it
 			CURRENT_EASYRSA_VERSION=$(sed -rn 's/^set_var EASYRSA_VERSION\s+(.+)$/\1/p' /etc/openvpn/easy-rsa/vars)
+			# If we could not get the version, set it to unknown
+			if [[ -z $CURRENT_EASYRSA_VERSION ]]; then
+				CURRENT_EASYRSA_VERSION="unknown"
+			fi
 			echo "Found current EasyRSA version $CURRENT_EASYRSA_VERSION."
-		else
-			# If we don't have the file vars, we don't know the current version
-			CURRENT_EASYRSA_VERSION="unknown"
-			echo "Could not find current EasyRSA version."
 		fi
-	else
-		# If we don't have a folder, we don't know the current version
-		CURRENT_EASYRSA_VERSION="unknown"
-		echo "Could not find current EasyRSA version."
 	fi
 
 	echo ""
 	echo "Current EasyRSA version is $CURRENT_EASYRSA_VERSION."
 
 	# Check if EasyRSA is already up to date
-	if [[ $LATEST_EASYRSA_VERSION == $CURRENT_EASYRSA_VERSION ]]; then
+	if [[ "$LATEST_EASYRSA_VERSION" == "$CURRENT_EASYRSA_VERSION" ]]; then
 		echo "EasyRSA is already up to date."
 		exit 0
 	fi
@@ -1197,7 +1194,7 @@ function updateEasyRSA() {
 	installEasyRSA "$LATEST_EASYRSA_VERSION"
 
 	# Append the version if not already installed, otherwise replace it
-	if [[ $CURRENT_EASYRSA_VERSION == "unknown" ]]; then
+	if [[ "$CURRENT_EASYRSA_VERSION" == "unknown" ]]; then
 		echo "set_var EASYRSA_VERSION $LATEST_EASYRSA_VERSION" >>/etc/openvpn/easy-rsa/vars
 	else
 		sed -i "s/^set_var EASYRSA_VERSION\s+.*/set_var EASYRSA_VERSION $LATEST_EASYRSA_VERSION/" /etc/openvpn/easy-rsa/vars
