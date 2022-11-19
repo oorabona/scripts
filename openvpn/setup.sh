@@ -598,7 +598,8 @@ function installOpenVPN() {
 	installQuestions
 
 	# Get the "public" interface from the default route
-	NIC=$(ip -4 route ls | grep default | grep -Po '(?<=dev )(\S+)' | head -1)
+	# For maximum compatibility (e.g. Alpine), we cannot use "grep -P", neither can use "ip route ls"
+	NIC=$(ip -4 route show default | sed -ne 's/^default .* dev \([^ ]*\) .*$/\1/p')
 	if [[ -z $NIC ]] && [[ $IPV6_SUPPORT == 'y' ]]; then
 		NIC=$(ip -6 route show default | sed -ne 's/^default .* dev \([^ ]*\) .*$/\1/p')
 	fi
