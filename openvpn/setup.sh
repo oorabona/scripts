@@ -584,6 +584,7 @@ function installOpenVPN() {
 		CONTINUE=${CONTINUE:-y}
 		CLIENT_TO_CLIENT=${CLIENT_TO_CLIENT:-n}
 		BLOCK_OUTSIDE_DNS=${BLOCK_OUTSIDE_DNS:-y}
+		EASYRSA_CRL_DAYS=${EASYRSA_CRL_DAYS:-3650} # 10 years
 
 		# Behind NAT, we'll default to the publicly reachable IPv4/IPv6.
 		if [[ $IPV6_SUPPORT == "y" ]]; then
@@ -665,7 +666,7 @@ function installOpenVPN() {
 		fi
 
 		./easyrsa build-server-full "$SERVER_NAME" nopass
-		EASYRSA_CRL_DAYS=3650 ./easyrsa gen-crl
+		./easyrsa gen-crl
 
 		case $TLS_SIG in
 		1)
