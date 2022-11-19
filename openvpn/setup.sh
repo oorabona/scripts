@@ -86,9 +86,18 @@ function checkOS() {
 		fi
 	elif [[ -e /etc/arch-release ]]; then
 		OS=arch
-	else
+	elif [[ "$OS" != "" ]]; then
 		echo "Looks like you aren't running this installer on a Debian, Ubuntu, Fedora, CentOS, Amazon Linux 2, Oracle Linux 8 or Arch Linux system"
-		exit 1
+		echo ""
+		echo "Do you still want to run this installer? (If yes, only systemctl scripts will not be installed)"
+		echo ""
+		until [[ $CONTINUE =~ (y|n) ]]; do
+			read -rp "Continue? [y/n]: " -e CONTINUE
+		done
+		if [[ $CONTINUE == "n" ]]; then
+			exit 1
+		fi
+		OS=other
 	fi
 }
 
@@ -859,7 +868,7 @@ verb 3" >>/etc/openvpn/server.conf
 		# This package uses a sysvinit service
 		systemctl enable openvpn
 		systemctl start openvpn
-	else
+	elif [[ $OS != 'other' ]]; then
 		# Don't modify package-provided service
 		cp /lib/systemd/system/openvpn\@.service /etc/systemd/system/openvpn\@.service
 
@@ -912,7 +921,8 @@ ip6tables -D INPUT -i $NIC -p $PROTOCOL --dport $PORT -j ACCEPT" >>/etc/iptables
 	chmod +x /etc/iptables/rm-openvpn-rules.sh
 
 	# Handle the rules via a systemd script
-	echo "[Unit]
+	if [[ "$OS" != 'other' ]]; then
+		echo "[Unit]
 Description=iptables rules for OpenVPN
 Before=network-online.target
 Wants=network-online.target
@@ -926,10 +936,11 @@ RemainAfterExit=yes
 [Install]
 WantedBy=multi-user.target" >/etc/systemd/system/iptables-openvpn.service
 
-	# Enable service and apply rules
-	systemctl daemon-reload
-	systemctl enable iptables-openvpn
-	systemctl start iptables-openvpn
+		# Enable service and apply rules
+		systemctl daemon-reload
+		systemctl enable iptables-openvpn
+		systemctl start iptables-openvpn
+	fi
 
 	# If the server is behind a NAT, use the correct IP address for the clients to connect to
 	if [[ $ENDPOINT != "" ]]; then
