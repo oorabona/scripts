@@ -633,7 +633,7 @@ function installOpenVPN() {
 
 	# Install the latest version of easy-rsa from source, if not already installed.
 	if [[ ! -d /etc/openvpn/easy-rsa/ ]]; then
-		downloadEasyRSA
+		updateEasyRSA
 
 		cd /etc/openvpn/easy-rsa/ || return
 		echo "set_var EASYRSA_VERSION ${version}" > vars
@@ -1165,7 +1165,8 @@ function updateEasyRSA() {
 	echo "Found latest EasyRSA version $LATEST_EASYRSA_VERSION."
 
 	# Get the current EasyRSA version
-	CURRENT_EASYRSA_VERSION=$(grep -oP 'set_var EASYRSA_VERSION \K(.*)' /etc/openvpn/easy-rsa/vars)
+	# We cannot use grep -Po because it's not available on all systems, use sed instead
+	CURRENT_EASYRSA_VERSION=$(grep 'set_var EASYRSA_VERSION' /etc/openvpn/easy-rsa/vars | sed -E 's/.*"(.+)".*/\1/')
 	echo "Current EasyRSA version is $CURRENT_EASYRSA_VERSION."
 
 	# Check if EasyRSA is already up to date
