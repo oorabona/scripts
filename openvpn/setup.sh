@@ -562,10 +562,10 @@ function installEasyRSA() {
 	if [[ -z $version ]]; then
 		version=$(getLatestEasyRSAVersion)
 	fi
-	wget -O ~/easy-rsa.tgz https://github.com/OpenVPN/easy-rsa/releases/download/v${version}/EasyRSA-${version}.tgz
-	mkdir -p /etc/openvpn/easy-rsa
-	tar xzf ~/easy-rsa.tgz --strip-components=1 --directory /etc/openvpn/easy-rsa
-	rm -f ~/easy-rsa.tgz
+	wget -O ~/easy-rsa.tgz https://github.com/OpenVPN/easy-rsa/releases/download/v${version}/EasyRSA-${version}.tgz \
+	&& mkdir -p /etc/openvpn/easy-rsa \
+	&& tar xzf ~/easy-rsa.tgz --strip-components=1 --directory /etc/openvpn/easy-rsa \
+	&& rm -f ~/easy-rsa.tgz || echo "Could not download EasyRSA." && exit 1
 }
 
 function installOpenVPN() {
