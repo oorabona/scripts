@@ -1126,14 +1126,14 @@ function newClient() {
 		SERVER_CN=$(sed -n 's/^set_var EASYRSA_REQ_CN[[:space:]]*//p' /etc/openvpn/easy-rsa/vars)
 
 		# Everything needed is in the image, save to $CLIENT.google_authenticator file in /etc/openvpn/otp
-		if [[ -z "$CICD" ]]; then
+		if [[ "$AUTO_INSTALL" == "y" ]]; then
+			# Skip confirmation if running in auto install mode
+			google-authenticator --time-based --disallow-reuse --force --rate-limit=3 --rate-time=30 --window-size=3 \
+				-l "${CLIENT}@${SERVER_CN}" -s /etc/openvpn/otp/${CLIENT}.google_authenticator --no-confirm
+		else
 			# Authenticator will ask for other parameters. User can choose rate limit, token reuse policy and time window policy
 			# Always use time base OTP otherwise storage for counters must be configured somewhere in volume
 			google-authenticator --time-based --force -l "${CLIENT}@${SERVER_CN}" -s /etc/openvpn/otp/${CLIENT}.google_authenticator
-		else
-			# Skip confirmation if running from CICD
-			google-authenticator --time-based --disallow-reuse --force --rate-limit=3 --rate-time=30 --window-size=3 \
-				-l "${CLIENT}@${SERVER_CN}" -s /etc/openvpn/otp/${CLIENT}.google_authenticator --no-confirm
 		fi
 	fi
 
