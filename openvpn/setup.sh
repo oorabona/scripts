@@ -862,7 +862,7 @@ verb 3" >>/etc/openvpn/server.conf
 		PLUGIN_PATH="/usr/local/lib/openvpn/plugins/openvpn-plugin-auth-pam.so"
 	elif [[ -r /usr/lib/openvpn/plugins/openvpn-plugin-auth-pam.so ]]; then
 		PLUGIN_PATH="/usr/lib/openvpn/plugins/openvpn-plugin-auth-pam.so"
-	else
+	elif [[ $OTP != "1" ]]; then
 		echo "Error: openvpn-plugin-auth-pam.so not found!"
 		exit 1
 	fi
