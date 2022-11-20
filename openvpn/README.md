@@ -56,11 +56,6 @@ Example usage:
 
 ```bash
 AUTO_INSTALL=y ./openvpn-setup.sh
-
-# or
-
-export AUTO_INSTALL=y
-./openvpn-setup.sh
 ```
 
 Or if you don't want to install the script locally:
@@ -73,22 +68,148 @@ A default set of variables will then be set, by passing the need for user input.
 
 If you want to customise your installation, you can export them or specify them on the same line, as shown above.
 
-- `APPROVE_INSTALL=y`
-- `APPROVE_IP=y`
-- `IPV6_SUPPORT=n`
-- `PORT_CHOICE=1`
-- `PROTOCOL_CHOICE=1`
-- `DNS=1`
-- `COMPRESSION_ENABLED=n`
-- `CUSTOMIZE_ENC=n`
-- `CLIENT=clientname`
-- `PASS=1`
-- `CLIENT_TO_CLIENT=n`
-- `BLOCK_OUTSIDE_DNS=y`
+- APPROVE_INSTALL (default: y)
 
-If the server is behind NAT, you can specify its endpoint with the `ENDPOINT` variable. If the endpoint is the public IP address which it is behind, you can use `ENDPOINT=$(curl -4 ifconfig.co)` (the script will default to this). The endpoint can be an IPv4 or a domain.
+> Description:
+> Tells the script to automatically approve the installation of OpenVPN and EasyRSA.
 
-Other variables can be set depending on your choice (encryption, compression). You can search for them in the `installQuestions()` function of the script.
+- IPV4_SUPPORT (default: y)
+
+> Description:
+> Tells the script to enable IPv4 support. This is at the moment unused due to the way OpenVPN handles IPv4 and IPv6.
+
+- IPV6_SUPPORT (default: n)
+
+> Description:
+> Tells the script to (force) enable IPv6 support. When in **interactive** mode, the script will try to detect if IPv6 is supported by the system. If it is, it will ask you if you want to enable it. If you don't, you can force it by setting this variable to `y`.
+
+- PORT_CHOICE (default: 1)
+
+> Description:
+> Tells the script which port to use for OpenVPN. The default is `1`, which is the menu item referring to the default port for OpenVPN (e.g. 1194). Option `2` will let you specify a `PORT` of your own choice. You can also choose `3`, which will use a random port between 49152 and 65535.
+
+- PORT (default: 1194)
+
+> Description:
+> Tells the script which port to use for OpenVPN. This is only used if `PORT_CHOICE` is set to `2`.
+
+- PROTOCOL_CHOICE (default: 1)
+
+> Description:
+> Tells the script which protocol to use for OpenVPN. The default is `1`, which is the menu item referring to the default protocol for OpenVPN (e.g. UDP). Option `2` will let you use `TCP` instead.
+
+- DNS (default: 1)
+
+> Description:
+> Tells the script which DNS provider to use. The default is `1`, which is the menu item referring to the default DNS provider (e.g. from `/etc/resolv.conf`). The other options are as follows:
+>
+> - 0 = Do not push any DNS server
+> - 1 = Current system resolvers (from /etc/resolv.conf)
+> - 2 = Cloudflare (Anycast: worldwide)
+> - 3 = Quad9 (Anycast: worldwide)
+> - 4 = Quad9 uncensored (Anycast: worldwide)
+> - 5 = FDN (France)
+> - 6 = DNS.WATCH (Germany)
+> - 7 = OpenDNS (Anycast: worldwide)
+> - 8 = Google (Anycast: worldwide)
+> - 9 = AdGuard DNS (Anycast: worldwide)
+> - 10 = NextDNS (Anycast: worldwide)
+> - 11 = Custom
+
+-----------------------------
+> Note:
+> If you choose `11`, you will be asked to specify a custom DNS server using environment variables `DNS1` and `DNS2`.
+> If you choose `0`, there will be no DNS pushed to the client, with various repercussions. You will have to specify a DNS server in your client configuration file.
+
+- COMPRESSION_ENABLED (default: n)
+
+> Description:
+> Have compression enabled or not. The default is `n`, which will disable compression totally.
+> Although you can set this to `y`, it is not recommended to do so, since the VORACLE attack makes use of it...
+
+- CUSTOMIZE_ENC (default: n)
+
+> Description:
+> Tells the script to use custom encryption settings. The default is `n`, which will use the default encryption settings.
+> If you set this to `y`, you will be asked to specify a custom encryption cipher and key size.
+
+- CLIENT (default: client)
+
+> Description:
+> Client name to create configuration for.
+
+- PASS (default: 1)
+
+> Description:
+> Tells the script to use a password for the client configuration file. The default is `1`, which will create a passwordless client certificate. You can also set it to `2`, which will let you specify a password for the client certificate.
+
+-----------------------------
+> Note:
+> If you enable `OTP` (see below), it is equivalent of setting `PASS` to `2`, and you will be asked to specify a password for the client certificate. So you do not need to set `PASS` to `2` if you enable `OTP`.
+
+- CONTINUE (default: y)
+
+> Description:
+> Tells the script to continue till the end of the installation of OpenVPN and EasyRSA. The default is `y`, which will continue the installation. You can also set it to `n`, which will stop the installation if important decision has to be made.
+
+- CLIENT_TO_CLIENT (default: n)
+
+> Description:
+> Tells the script to enable client-to-client communication. The default is `n`, which will disable client-to-client communication. You can also set it to `y`, which will enable client-to-client communication.
+
+- BLOCK_OUTSIDE_DNS (default: y)
+
+> Description:
+> Tells the script to block DNS requests to outside DNS servers. The default is `y`, which will block DNS requests to outside DNS servers. You can also set it to `n`, which will allow DNS requests to outside DNS servers.
+> This is useful if you want to use a DNS server that is not in the list above, but you don't want to allow DNS requests to outside DNS servers.
+> Note that this is a client configuration option, so you will have to specify it in your client configuration file.
+
+- OTP (default: 1)
+
+> Description:
+> Tells the script to use a one-time password for the client configuration file. The default is option `1`, which tells the script to not use a one-time password. You can also set it to `2`, which will let you specify a one-time password for the client certificate. Google Authenticator is used to generate the one-time password.
+
+-----------------------------
+> Note:
+> If you enable `OTP`, it is equivalent of setting `PASS` to `2`, and you will be asked to specify a password for the client certificate. So you do not need to set `PASS` to `2` if you enable `OTP`.
+> A third option is provided for `OATH`, which is a more secure alternative to `OTP`. It is not yet implemented, but will be in the future.
+> For more information about how to set up `OTP` or `OATH`, please refer to the [wiki](https://github.com/oorabona/scripts/wiki/OpenVPN-OTP)
+
+- EASYRSA_CRL_DAYS (default: 3650)
+
+> Description:
+> Tells the script how many days the certificate revocation list (CRL) should be valid for. The default is `3650`, which is 10 years.
+
+- SUBNET_IPv4 (default: 10.8.0.0)
+
+> Description:
+> Tells the script which IPv4 subnet to use for OpenVPN. This subnet shall **NOT** be used by any other network on your system.
+> Any other value if acceptable as long as it is a valid IPv4 subnet (RFC1918).
+
+- SUBNET_IPv6 (default: fd42:42:42::)
+
+> Description:
+> Tells the script which IPv6 subnet to use for OpenVPN. This subnet shall **NOT** be used by any other network on your system.
+> Any other value if acceptable as long as it is a valid IPv6 subnet (RFC4193).
+
+- SUBNET_MASKv4 (default: 24)
+
+> Description:
+> Tells the script which IPv4 subnet mask to use for OpenVPN. The default is `24`, which is a /24 subnet.
+> Possible values range from `8` to `30`.
+
+- SUBNET_MASKv6 (default: 112)
+
+> Description:
+> Tells the script which IPv6 subnet mask to use for OpenVPN. The default is `112`, which is a /112 subnet.
+> Possible values range from `64` to `126`.
+
+- ENDPOINT (default: _determined automatically at runtime by asking <https://api.ipify.org>_)
+
+> Description:
+> Tells the script which endpoint to use for OpenVPN. The default is to determine the endpoint automatically at runtime by asking <https://api.ipify.org>. Usually this is the public IP address of the server.
+
+If the server is behind NAT, you can specify its endpoint with the `ENDPOINT` variable. The endpoint can be an IPv4 or a domain.
 
 The headless install is more-or-less idempotent, in that it has been made safe to run multiple times with the same parameters, e.g. by a state provisioner like Ansible/Terraform/Salt/Chef/Puppet. It will only install and regenerate the Easy-RSA PKI if it doesn't already exist, and it will only recreate all local config and re-generate the client file on each headless run.
 
@@ -125,6 +246,7 @@ export PASS="1"
 - Choice to protect clients with a password (private key encryption)
 - Add option for `client-to-client` connections
 - Easy-RSA update management
+- TOTP (Google Authenticator) support
 - Many other little things!
 
 ## Features dropped from Angristan's script
@@ -156,6 +278,8 @@ Among the changes:
 
 More Q&A in [FAQ.md](FAQ.md).
 
+-----------------------------
+
 **Q:** Which OpenVPN client do you recommend?
 
 **A:** If possible, an official OpenVPN 2.4 client.
@@ -166,19 +290,20 @@ More Q&A in [FAQ.md](FAQ.md).
 - Android: [OpenVPN for Android](https://play.google.com/store/apps/details?id=de.blinkt.openvpn).
 - iOS: [The official OpenVPN Connect client](https://itunes.apple.com/us/app/openvpn-connect/id590379981).
 
----
+-----------------------------
 
 **Q:** Is there an OpenVPN documentation?
 
 **A:** Yes, please head to the [OpenVPN Manual](https://community.openvpn.net/openvpn/wiki/Openvpn24ManPage), which references all the options.
 
----
+-----------------------------
 
 More Q&A in [FAQ.md](FAQ.md).
 
 ## One-stop solutions for public cloud
 
 Docker image: [oorabona/openvpn](https://hub.docker.com/r/oorabona/openvpn)
+GitHub: [oorabona/docker-containers](https://github.com/oorabona/docker-containers)
 
 ## Contributing
 
