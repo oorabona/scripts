@@ -113,6 +113,11 @@ function initialCheck() {
 	checkOS
 }
 
+function calc_subnet_mask() {
+	local mask=$((0xffffffff << (32 - $1)))
+	echo $((mask >> 24 & 0xff)).$((mask >> 16 & 0xff)).$((mask >> 8 & 0xff)).$((mask & 0xff))
+}
+
 function installQuestions() {
 	echo "Welcome to the OpenVPN installer!"
 	echo "The git repository is available at: https://github.com/oorabona/scripts/"
@@ -597,6 +602,10 @@ function installOpenVPN() {
 		BLOCK_OUTSIDE_DNS=${BLOCK_OUTSIDE_DNS:-y}
 		OTP=${OTP:-1}
 		EASYRSA_CRL_DAYS=${EASYRSA_CRL_DAYS:-3650} # 10 years
+		SUBNET_IPv4=${SUBNET_IPv4:-10.8.0.0}
+		SUBNET_IPv6=${SUBNET_IPv6:-fd42:42:42::}
+		SUBNET_MASKv4=${SUBNET_MASKv4:-24}
+		SUBNET_MASKv6=${SUBNET_MASKv6:-112}
 
 		# Behind NAT, we'll default to the publicly reachable IPv4/IPv6.
 		if [[ $IPV6_SUPPORT == "y" ]]; then
@@ -721,7 +730,7 @@ persist-key
 persist-tun
 keepalive 10 120
 topology subnet
-server 10.8.0.0 255.255.255.0
+server ${SUBNET_IPv4} $(calc_subnet_mask $SUBNET_MASKv4)
 ifconfig-pool-persist ipp.txt" >>/etc/openvpn/server.conf
 
 	# Add client-to-client if enabled
@@ -916,14 +925,14 @@ verb 3" >>/etc/openvpn/server.conf
 
 	# Script to add rules
 	echo "#!/bin/sh
-iptables -t nat -I POSTROUTING 1 -s 10.8.0.0/24 -o $NIC -j MASQUERADE
+iptables -t nat -I POSTROUTING 1 -s ${SUBNET_IPv4}/${SUBNET_MASKv4} -o $NIC -j MASQUERADE
 iptables -I INPUT 1 -i tun0 -j ACCEPT
 iptables -I FORWARD 1 -i $NIC -o tun0 -j ACCEPT
 iptables -I FORWARD 1 -i tun0 -o $NIC -j ACCEPT
 iptables -I INPUT 1 -i $NIC -p $PROTOCOL --dport $PORT -j ACCEPT" >/etc/iptables/add-openvpn-rules.sh
 
 	if [[ $IPV6_SUPPORT == 'y' ]]; then
-		echo "ip6tables -t nat -I POSTROUTING 1 -s fd42:42:42:42::/112 -o $NIC -j MASQUERADE
+		echo "ip6tables -t nat -I POSTROUTING 1 -s ${SUBNET_IPv6}/${SUBNET_MASKv6} -o $NIC -j MASQUERADE
 ip6tables -I INPUT 1 -i tun0 -j ACCEPT
 ip6tables -I FORWARD 1 -i $NIC -o tun0 -j ACCEPT
 ip6tables -I FORWARD 1 -i tun0 -o $NIC -j ACCEPT
@@ -932,14 +941,14 @@ ip6tables -I INPUT 1 -i $NIC -p $PROTOCOL --dport $PORT -j ACCEPT" >>/etc/iptabl
 
 	# Script to remove rules
 	echo "#!/bin/sh
-iptables -t nat -D POSTROUTING -s 10.8.0.0/24 -o $NIC -j MASQUERADE
+iptables -t nat -D POSTROUTING -s ${SUBNET_IPv4}/${SUBNET_MASKv4} -o $NIC -j MASQUERADE
 iptables -D INPUT -i tun0 -j ACCEPT
 iptables -D FORWARD -i $NIC -o tun0 -j ACCEPT
 iptables -D FORWARD -i tun0 -o $NIC -j ACCEPT
 iptables -D INPUT -i $NIC -p $PROTOCOL --dport $PORT -j ACCEPT" >/etc/iptables/rm-openvpn-rules.sh
 
 	if [[ $IPV6_SUPPORT == 'y' ]]; then
-		echo "ip6tables -t nat -D POSTROUTING -s fd42:42:42:42::/112 -o $NIC -j MASQUERADE
+		echo "ip6tables -t nat -D POSTROUTING -s ${SUBNET_IPv6}/${SUBNET_MASKv6} -o $NIC -j MASQUERADE
 ip6tables -D INPUT -i tun0 -j ACCEPT
 ip6tables -D FORWARD -i $NIC -o tun0 -j ACCEPT
 ip6tables -D FORWARD -i tun0 -o $NIC -j ACCEPT
