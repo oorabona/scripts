@@ -539,6 +539,17 @@ function installQuestions() {
 			read -rp "Control channel additional security mechanism [1-2]: " -e -i 1 TLS_SIG
 		done
 	fi
+	
+	# Finally, ask for OTP enablement
+	echo ""
+	echo "Do you want to enable one-time-password authentication for your users?"
+	echo "   1) Disable"
+	echo "   2) Enable with Google Authenticator (recommended)"
+	echo "   3) Enable with OATH Toolkit"
+	until [[ $OTP =~ [1-3] ]]; do
+		read -rp "OTP [1-3]: " -e -i 1 OTP
+	done
+
 	echo ""
 	echo "Okay, that was all I needed. We are ready to setup your OpenVPN server now."
 	echo "You will be able to generate a client at the end of the installation."
@@ -584,6 +595,7 @@ function installOpenVPN() {
 		CONTINUE=${CONTINUE:-y}
 		CLIENT_TO_CLIENT=${CLIENT_TO_CLIENT:-n}
 		BLOCK_OUTSIDE_DNS=${BLOCK_OUTSIDE_DNS:-y}
+		OTP=${OTP:-1}
 		EASYRSA_CRL_DAYS=${EASYRSA_CRL_DAYS:-3650} # 10 years
 
 		# Behind NAT, we'll default to the publicly reachable IPv4/IPv6.
@@ -835,6 +847,21 @@ verb 3" >>/etc/openvpn/server.conf
 	# Create log dir
 	mkdir -p /var/log/openvpn
 
+	# If TOTP is enabled, add the plugin to the server config
+	# Check if the plugin is installed locally or globally
+	if [[ -r /usr/local/lib/openvpn/plugins/openvpn-plugin-auth-pam.so ]]; then
+		PLUGIN_PATH="/usr/local/lib/openvpn/plugins/openvpn-plugin-auth-pam.so"
+	elif [[ -r /usr/lib/openvpn/plugins/openvpn-plugin-auth-pam.so ]]; then
+		PLUGIN_PATH="/usr/lib/openvpn/plugins/openvpn-plugin-auth-pam.so"
+	else
+		echo "Error: openvpn-plugin-auth-pam.so not found!"
+		exit 1
+	fi
+	if [[ $OTP != "1" ]]; then
+		echo "plugin $PLUGIN_PATH openvpn" >>/etc/openvpn/server.conf
+		echo "reneg-sec 0" >>/etc/openvpn/server.conf
+	fi
+
 	# Enable routing
 	echo 'net.ipv4.ip_forward=1' >/etc/sysctl.d/99-openvpn.conf
 	if [[ $IPV6_SUPPORT == 'y' ]]; then
@@ -1044,6 +1071,26 @@ function newClient() {
 		TLS_SIG="1"
 	elif grep -qs "^tls-auth" /etc/openvpn/server.conf; then
 		TLS_SIG="2"
+	fi
+
+	# Determine if we need to activate TOTP for this client
+	if grep -qs "^plugin.*openvpn-plugin-auth-pam.so" /etc/openvpn/server.conf; then
+		# Ensure the otp folder is present
+		[ -d /etc/openvpn/otp ] || mkdir -p /etc/openvpn/otp
+
+		# Get SERVER_CN from easyrsa using sed
+		SERVER_CN=$(sed -n 's/^set_var EASYRSA_REQ_CN[[:space:]]*//p' /etc/openvpn/easy-rsa/vars)
+
+		# Everything needed is in the image, save to $CLIENT.google_authenticator file in /etc/openvpn/otp
+		if [[ -z "$CICD" ]]; then
+			# Authenticator will ask for other parameters. User can choose rate limit, token reuse policy and time window policy
+			# Always use time base OTP otherwise storage for counters must be configured somewhere in volume
+			google-authenticator --time-based --force -l "${CLIENT}@${SERVER_CN}" -s /etc/openvpn/otp/${CLIENT}.google_authenticator
+		else
+			# Skip confirmation if running from CICD
+			google-authenticator --time-based --disallow-reuse --force --rate-limit=3 --rate-time=30 --window-size=3 \
+				-l "${CLIENT}@${SERVER_CN}" -s /etc/openvpn/otp/${CLIENT}.google_authenticator --no-confirm
+		fi
 	fi
 
 	# Generates the custom client.ovpn
