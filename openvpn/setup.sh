@@ -4,6 +4,18 @@
 # Secure OpenVPN server setup
 # Adapted from https://github.com/angristan/openvpn-install
 
+SERVICE_START=n
+
+function finish() {
+	if [ "$SERVICE_START" == "y" ]; then
+		echo "Cleaning up iptables rules before leaving..."
+		. /etc/iptables/rm-openvpn-rules.sh
+	fi
+	echo "bye bye!"
+}
+
+trap finish SIGINT
+
 function isRoot() {
 	if [ "$EUID" -ne 0 ]; then
 		return 1
@@ -1079,8 +1091,6 @@ function newClient() {
 	echo ""
 	echo "The configuration file has been written to $homeDir/$CLIENT.ovpn."
 	echo "Download the .ovpn file and import it in your OpenVPN client."
-
-	exit 0
 }
 
 function revokeClient() {
@@ -1211,7 +1221,7 @@ function updateEasyRSA() {
 }
 
 function manageMenu() {
-	echo "Welcome to OpenVPN-install!"
+	echo "Welcome to OpenVPN setup tool!"
 	echo "The git repository is available at: https://github.com/oorabona/scripts/"
 	echo ""
 	echo "It looks like OpenVPN is already set up."
@@ -1253,4 +1263,12 @@ if [[ -e /etc/openvpn/server.conf && $AUTO_INSTALL != "y" ]]; then
 	manageMenu
 else
 	installOpenVPN
+
+	# If we are here, OpenVPN is installed, we can start the service
+	if [[ $AUTO_START == "y" && $OS == "other" ]]; then
+		. /etc/iptables/add-openvpn-rules.sh
+		SERVICE_START=y
+		openvpn --writepid /run/openvpn/server.pid --cd /etc/openvpn/ --config /etc/openvpn/server.conf
+		. /etc/iptables/rm-openvpn-rules.sh
+	fi
 fi
