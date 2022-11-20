@@ -210,6 +210,41 @@ function installQuestions() {
 	done
 	
 	echo ""
+	echo "Which subnet do you want to use for the VPN?"
+	echo "The default is ${SUBNET_IPv4}, but you can use any private subnet (RFC1918)."
+	echo ""
+	until [[ "$SUBNET_IPv4" =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ ]]; do
+		read -rp "Subnet: " -i "${SUBNET_IPv4}" -e SUBNET_IPv4
+	done
+
+	echo ""
+	echo "Please enter the SUBNET MASK you want to use for the VPN."
+	echo "The default is ${SUBNET_MASKv4}, but you can use any private subnet mask (RFC1918)."
+	echo ""
+	until [[ $SUBNET_MASKv4 =~ ^[0-9]+$ ]] && [ "$SUBNET_MASKv4" -ge 1 ] && [ "$SUBNET_MASKv4" -le 30 ]; do
+		read -rp "Subnet Mask: " -i "${SUBNET_MASKv4}" -e SUBNET_MASKv4
+	done
+
+	# If we need to enable IPv6 support, ask for the IPv6 subnet
+	if [[ $IPV6_SUPPORT == "y" ]]; then
+		echo ""
+		echo "Which subnet do you want to use for the VPN?"
+		echo "The default is ${SUBNET_IPv6}, but you can use any private subnet (RFC1918)."
+		echo ""
+		until [[ "$SUBNET_IPv6" =~ ^([a-f0-9]{1,4}:){7}[a-f0-9]{1,4}$ ]]; do
+			read -rp "Subnet: " -i "${SUBNET_IPv6}" -e SUBNET_IPv6
+		done
+
+		echo ""
+		echo "Please enter the SUBNET MASK you want to use for the VPN."
+		echo "The default is ${SUBNET_MASKv6}, but you can use any private subnet mask (RFC1918)."
+		echo ""
+		until [[ $SUBNET_MASKv6 =~ ^[0-9]+$ ]] && [ "$SUBNET_MASKv6" -ge 1 ] && [ "$SUBNET_MASKv6" -le 126 ]; do
+			read -rp "Subnet Mask: " -i "${SUBNET_MASKv6}" -e SUBNET_MASKv6
+		done
+	fi
+
+	echo ""
 	echo "What port do you want OpenVPN to listen to?"
 	echo "   1) Default: 1194"
 	echo "   2) Custom"
