@@ -126,28 +126,31 @@ function installQuestions() {
 	echo "I need to ask you a few questions before starting the setup."
 	echo "You can leave the default options and just press enter if you are ok with them."
 	echo ""
-	echo "I need to know the IPv4 address of the network interface you want OpenVPN listening to."
-	echo "Unless your server is behind NAT, it should be your public IPv4 address."
 
-	# Detect public IPv4 address and pre-fill for the user
-	IP=$(ip -4 addr | sed -ne 's|^.* inet \([^/]*\)/.* scope global.*$|\1|p' | head -1)
+	if [[ $IPV4_SUPPORT == "y" && -z $ENDPOINT ]]; then
+		echo "I need to know the IPv4 address of the network interface you want OpenVPN listening to."
+		echo "Unless your server is behind NAT, it should be your public IPv4 address."
 
-	if [[ -z $IP ]]; then
-		# Ask for the public IPv4 address if not found
-		until [[ "$IP" =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ ]]; do
-			read -rp "IP address: " -e IP
-		done
-	fi
-	# If $IP is a private IP address, the server must be behind NAT
-	if echo "$IP" | grep -qE '^(10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.|192\.168)'; then
-		echo ""
-		echo "It seems this server is behind NAT. What is its public IPv4 address or hostname?"
-		echo "We need it for the clients to connect to the server."
+		# Detect public IPv4 address and pre-fill for the user
+		IP=$(ip -4 addr | sed -ne 's|^.* inet \([^/]*\)/.* scope global.*$|\1|p' | head -1)
 
-		PUBLICIP=$(curl -s https://api.ipify.org)
-		until [[ "$ENDPOINT" != "" ]]; do
-			read -rp "Public IPv4 address or hostname: " -i "$PUBLICIP" -e ENDPOINT
-		done
+		if [[ -z $IP ]]; then
+			# Ask for the public IPv4 address if not found
+			until [[ "$IP" =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ ]]; do
+				read -rp "IP address: " -e IP
+			done
+		fi
+		# If $IP is a private IP address, the server must be behind NAT
+		if echo "$IP" | grep -qE '^(10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.|192\.168)'; then
+			echo ""
+			echo "It seems this server is behind NAT. What is its public IPv4 address or hostname?"
+			echo "We need it for the clients to connect to the server."
+
+			PUBLICIP=$(curl -s https://api.ipify.org)
+			until [[ "$ENDPOINT" != "" ]]; do
+				read -rp "Public IPv4 address or hostname: " -i "$PUBLICIP" -e ENDPOINT
+			done
+		fi
 	fi
 
 	echo ""
@@ -172,7 +175,7 @@ function installQuestions() {
 		read -rp "Do you want to enable IPv6 support (NAT)? [y/n]: " -i $SUGGESTION -e IPV6_SUPPORT
 	done
 
-	if [[ $IPV6_SUPPORT == "y" ]]; then
+	if [[ $IPV6_SUPPORT == "y" && -z $ENDPOINT6 ]]; then
 		echo ""
 		echo "I need to know the IPv6 address of the network interface you want OpenVPN listening to."
 		echo "Unless your server is behind NAT, it should be your public IPv6 address."
@@ -623,7 +626,7 @@ function installOpenVPN() {
 	if [[ $AUTO_INSTALL == "y" ]]; then
 		# Set default choices so that no questions will be asked.
 		APPROVE_INSTALL=${APPROVE_INSTALL:-y}
-		APPROVE_IP=${APPROVE_IP:-y}
+		IPV4_SUPPORT=${IPV4_SUPPORT:-y}
 		IPV6_SUPPORT=${IPV6_SUPPORT:-n}
 		PORT_CHOICE=${PORT_CHOICE:-1}
 		PROTOCOL_CHOICE=${PROTOCOL_CHOICE:-1}
@@ -641,14 +644,6 @@ function installOpenVPN() {
 		SUBNET_IPv6=${SUBNET_IPv6:-fd42:42:42::}
 		SUBNET_MASKv4=${SUBNET_MASKv4:-24}
 		SUBNET_MASKv6=${SUBNET_MASKv6:-112}
-
-		# Behind NAT, we'll default to the publicly reachable IPv4/IPv6.
-		if [[ $IPV6_SUPPORT == "y" ]]; then
-			PUBLIC_IP=$(curl --retry 5 --retry-connrefused https://api.ipify.org)
-		else
-			PUBLIC_IP=$(curl --retry 5 --retry-connrefused -4 https://api.ipify.org)
-		fi
-		ENDPOINT=${ENDPOINT:-$PUBLIC_IP}
 	fi
 
 	# Run setup questions first, and set other variables if auto-install
@@ -751,7 +746,16 @@ function installOpenVPN() {
 	chmod 644 /etc/openvpn/crl.pem
 
 	# Generate server.conf
-	echo "port $PORT" >/etc/openvpn/server.conf
+	echo "# Automagically generated server.conf file" > /etc/openvpn/server.conf
+
+	# Probably not needed at the moment, OpenVPN seems to be able to do this on its own
+	# https://blog.djoproject.net/2019/10/19/configuring-a-dualstack-ipv4-ipv6-openvnp-2-4-server/
+	# if [[ $IPV4_SUPPORT == "y" ]]; then
+	# 	echo "local $ENDPOINT" >> /etc/openvpn/server.conf
+	# elif [[ $IPV6_SUPPORT == "y" ]]; then
+	# 	echo "local $ENDPOINT6" >> /etc/openvpn/server.conf
+	# fi
+	echo "port $PORT" >>/etc/openvpn/server.conf
 	if [[ $IPV6_SUPPORT == 'n' ]]; then
 		echo "proto $PROTOCOL" >>/etc/openvpn/server.conf
 	elif [[ $IPV6_SUPPORT == 'y' ]]; then
@@ -845,11 +849,11 @@ ifconfig-pool-persist ipp.txt" >>/etc/openvpn/server.conf
 
 	# IPv6 network settings if needed
 	if [[ $IPV6_SUPPORT == 'y' ]]; then
-		echo 'server-ipv6 fd42:42:42:42::/112
+		echo "server-ipv6 $SUBNET_IPv6/$SUBNET_MASKv6
 tun-ipv6
 push tun-ipv6
-push "route-ipv6 2000::/3"
-push "redirect-gateway ipv6"' >>/etc/openvpn/server.conf
+push \"route-ipv6 2000::/3\"
+push \"redirect-gateway ipv6\"" >>/etc/openvpn/server.conf
 	fi
 
 	if [[ $COMPRESSION_ENABLED == "y" ]]; then
