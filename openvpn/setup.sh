@@ -214,7 +214,7 @@ function installQuestions() {
 	echo "The default is 10.8.0.0, but you can use any private subnet (RFC1918)."
 	echo ""
 	until [[ "$SUBNET_IPv4" =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ ]]; do
-		read -rp "Subnet: " -e SUBNET_IPv4
+		read -rp "Subnet: " -i 10.8.0.0 -e SUBNET_IPv4
 	done
 
 	echo ""
@@ -222,7 +222,7 @@ function installQuestions() {
 	echo "The default is 24 bits (e.g. 255.255.255.0), but you can use any private subnet mask (RFC1918)."
 	echo ""
 	until [[ $SUBNET_MASKv4 =~ ^[0-9]+$ ]] && [ "$SUBNET_MASKv4" -ge 8 ] && [ "$SUBNET_MASKv4" -le 30 ]; do
-		read -rp "Subnet Mask [8-30]: " -e SUBNET_MASKv4
+		read -rp "Subnet Mask [8-30]: " -i 24 -e SUBNET_MASKv4
 	done
 
 	# If we need to enable IPv6 support, ask for the IPv6 subnet
@@ -232,7 +232,7 @@ function installQuestions() {
 		echo "The default is fd42:42:42::, but you can use any private subnet (RFC1918)."
 		echo ""
 		until [[ "$SUBNET_IPv6" =~ ^([a-f0-9]{1,4}:){7}[a-f0-9]{1,4}$ ]]; do
-			read -rp "Subnet: " -e SUBNET_IPv6
+			read -rp "Subnet: " -i fd42:42:42:: -e SUBNET_IPv6
 		done
 
 		echo ""
@@ -240,7 +240,7 @@ function installQuestions() {
 		echo "The default is 112, but you can use any private subnet mask (RFC1918)."
 		echo ""
 		until [[ $SUBNET_MASKv6 =~ ^[0-9]+$ ]] && [ "$SUBNET_MASKv6" -ge 64 ] && [ "$SUBNET_MASKv6" -le 126 ]; do
-			read -rp "Subnet Mask [64-126]: " -e SUBNET_MASKv6
+			read -rp "Subnet Mask [64-126]: " -i 112 -e SUBNET_MASKv6
 		done
 	fi
 
