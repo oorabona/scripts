@@ -4,18 +4,6 @@
 # Secure OpenVPN server setup
 # Adapted from https://github.com/angristan/openvpn-install
 
-SERVICE_START=n
-
-function finish() {
-	if [ "$SERVICE_START" == "y" ]; then
-		echo "Cleaning up iptables rules before leaving..."
-		. /etc/iptables/rm-openvpn-rules.sh
-	fi
-	echo "bye bye!"
-}
-
-trap finish SIGINT
-
 function isRoot() {
 	if [ "$EUID" -ne 0 ]; then
 		return 1
@@ -1266,9 +1254,8 @@ else
 
 	# If we are here, OpenVPN is installed, we can start the service
 	if [[ $AUTO_START == "y" && $OS == "other" ]]; then
-		. /etc/iptables/add-openvpn-rules.sh
-		SERVICE_START=y
+		source /etc/iptables/add-openvpn-rules.sh
 		openvpn --writepid /run/openvpn/server.pid --cd /etc/openvpn/ --config /etc/openvpn/server.conf
-		. /etc/iptables/rm-openvpn-rules.sh
+		source /etc/iptables/rm-openvpn-rules.sh
 	fi
 fi
