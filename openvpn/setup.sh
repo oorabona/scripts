@@ -1255,7 +1255,7 @@ else
 	# If we are here, OpenVPN is installed, we can start the service
 	if [[ $AUTO_START == "y" && $OS == "other" ]]; then
 		source /etc/iptables/add-openvpn-rules.sh
-		openvpn --writepid /run/openvpn/server.pid --cd /etc/openvpn/ --config /etc/openvpn/server.conf
+		openvpn --writepid /run/openvpn.pid --cd /etc/openvpn/ --config /etc/openvpn/server.conf
 		source /etc/iptables/rm-openvpn-rules.sh
 	fi
 fi
