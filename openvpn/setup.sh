@@ -1161,9 +1161,14 @@ function resetOpenVPNConfig() {
 }
 
 function updateEasyRSA() {
-	# Get the latest EasyRSA version
-	LATEST_EASYRSA_VERSION=$(getLatestEasyRSAVersion)
-	echo "Found latest EasyRSA version $LATEST_EASYRSA_VERSION."
+	# Get the latest EasyRSA version if none supplied
+	if [[ -z $EASYRSA_VERSION ]]; then
+		LATEST_EASYRSA_VERSION=$(getLatestEasyRSAVersion)
+		echo "Found latest EasyRSA version $LATEST_EASYRSA_VERSION."
+	else
+		LATEST_EASYRSA_VERSION=$EASYRSA_VERSION
+		echo "Force using EasyRSA version $LATEST_EASYRSA_VERSION."
+	fi
 
 	# Get the current EasyRSA version
 	# We cannot use grep -Po because it's not available on all systems, use sed instead
