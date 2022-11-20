@@ -147,9 +147,14 @@ function installQuestions() {
 			echo "We need it for the clients to connect to the server."
 
 			PUBLICIP=$(curl -s https://api.ipify.org)
-			until [[ "$ENDPOINT" != "" ]]; do
-				read -rp "Public IPv4 address or hostname: " -i "$PUBLICIP" -e ENDPOINT
-			done
+
+			if [[ "$AUTO_INSTALL" == "y" ]]; then
+				ENDPOINT=$PUBLICIP
+			else
+				until [[ "$ENDPOINT" != "" ]]; do
+					read -rp "Public IPv4 address or hostname: " -i "$PUBLICIP" -e ENDPOINT
+				done
+			fi
 		fi
 	fi
 
