@@ -86,7 +86,7 @@ function checkOS() {
 		fi
 	elif [[ -e /etc/arch-release ]]; then
 		OS=arch
-	elif [[ "$OS" != "" ]]; then
+	elif [[ "$OS" == "" ]]; then
 		echo "Looks like you aren't running this installer on a Debian, Ubuntu, Fedora, CentOS, Amazon Linux 2, Oracle Linux 8 or Arch Linux system"
 		echo ""
 		echo "Do you still want to run this installer? (If yes, only systemctl scripts will not be installed)"
