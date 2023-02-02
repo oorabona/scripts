@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # Install Azure DevOps Agent
 # https://docs.microsoft.com/en-us/azure/devops/pipelines/agents/v2-linux?view=azure-devops
 
@@ -8,7 +8,7 @@ pool_name=${3:-"$(cat /tmp/pool_name)"}
 azureorg=${4:-"$(cat /tmp/azureorg)"}
 project_name=${5:-"$(cat /tmp/project_name)"}
 
-echo "Installing Azure DevOps Agent '${agent_version}' in pool '${pool_name}' for project '${project_name}' in Azure Org '${azureorg}'"
+echo "Installing Azure DevOps Agent '${agent_version}' on $HOSTNAME to join pool '${pool_name}' for project '${project_name}' in Azure Org '${azureorg}'"
 echo
 echo "/!\ This is an *unattended* installation, so you will not be able to interact with the installation process. /!\\"
 
@@ -25,7 +25,8 @@ fi
 sudo rm -rf /var/lib/apt/lists/lock
 
 # Install dependencies
-sudo apt-get update && apt dist-upgrade -y
+sudo apt-get update
+sudo apt dist-upgrade -y
 sudo apt-get install -y gnupg software-properties-common curl libunwind8 gettext apt-transport-https unzip zip
 
 # Install and register Azure Pipeline Agent
@@ -39,11 +40,11 @@ curl -fkSL -o vstsagent.tar.gz https://vstsagentpackage.azureedge.net/agent/${ag
 tar -zxvf vstsagent.tar.gz
 if [ -x "$(command -v systemctl)" ]
 then
-    ./config.sh --pool ${pool_name} --acceptteeeula --agent $HOSTNAME --url https://dev.azure.com/${azureorg}/ --work _work --projectname ${project_name} --auth PAT --token ${agent_pat} --runasservice
+    ./config.sh --unattended --pool ${pool_name} --acceptteeeula --agent $HOSTNAME --url https://dev.azure.com/${azureorg}/ --work _work --projectname ${project_name} --auth PAT --token ${agent_pat} --runasservice
     sudo ./svc.sh install
     sudo ./svc.sh start
 else
-    ./config.sh --pool ${pool_name} --acceptteeeula --agent $HOSTNAME --url https://dev.azure.com/${azureorg}/ --work _work --projectname ${project_name} --auth PAT --token ${agent_pat};
+    ./config.sh --unattended --pool ${pool_name} --acceptteeeula --agent $HOSTNAME --url https://dev.azure.com/${azureorg}/ --work _work --projectname ${project_name} --auth PAT --token ${agent_pat};
     ./run.sh
 fi
 
