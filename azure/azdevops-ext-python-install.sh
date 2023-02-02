@@ -1,7 +1,7 @@
-#!/bin/sh
+#!/bin/bash
 python_version=${1:-"$(cat /tmp/python_version)"}
 python_cmd=${2:-"python${python_version}"}
-toolset_path=${3:-"$(pwd)/_work/_tool"}
+toolset_path=${3:-"$(pwd)/azagent/_work/_tool"}
 
 # Make sure we have all required parameters
 if [ -z "${python_version}" ]
@@ -13,8 +13,8 @@ fi
 # Check if toolset path exists
 if [ ! -d "${toolset_path}" ]
 then
-    echo "Toolset path ${toolset_path} does not exist, aborting"
-    exit 1
+    echo "Toolset path ${toolset_path} does not exist, creating it ..."
+    mkdir -p ${toolset_path}
 fi
 
 # Install Python the-right-way
