@@ -7,6 +7,7 @@ agent_pat=${2:-"$(cat /tmp/agent_pat)"}
 pool_name=${3:-"$(cat /tmp/pool_name)"}
 azureorg=${4:-"$(cat /tmp/azureorg)"}
 project_name=${5:-"$(cat /tmp/project_name)"}
+workspace=${6:-"_work"}
 
 echo "Installing Azure DevOps Agent '${agent_version}' on $HOSTNAME to join pool '${pool_name}' for project '${project_name}' in Azure Org '${azureorg}'"
 echo
@@ -40,11 +41,19 @@ curl -fkSL -o vstsagent.tar.gz https://vstsagentpackage.azureedge.net/agent/${ag
 tar -zxvf vstsagent.tar.gz
 if [ -x "$(command -v systemctl)" ]
 then
-    ./config.sh --unattended --pool ${pool_name} --acceptteeeula --agent $HOSTNAME --url https://dev.azure.com/${azureorg}/ --work _work --projectname ${project_name} --auth PAT --token ${agent_pat} --runasservice
+    ./config.sh --unattended \
+        --pool ${pool_name} --acceptteeeula \
+        --agent $HOSTNAME --url https://dev.azure.com/${azureorg}/ \
+        --work ${workspace} --projectname ${project_name} \
+        --auth PAT --token ${agent_pat} --runasservice
     sudo ./svc.sh install
     sudo ./svc.sh start
 else
-    ./config.sh --unattended --pool ${pool_name} --acceptteeeula --agent $HOSTNAME --url https://dev.azure.com/${azureorg}/ --work _work --projectname ${project_name} --auth PAT --token ${agent_pat};
+    ./config.sh --unattended \
+        --pool ${pool_name} --acceptteeeula \
+        --agent $HOSTNAME --url https://dev.azure.com/${azureorg}/ \
+        --work ${workspace} --projectname ${project_name} \
+        --auth PAT --token ${agent_pat}
     ./run.sh
 fi
 
