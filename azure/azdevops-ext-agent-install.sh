@@ -2,12 +2,16 @@
 # Install Azure DevOps Agent
 # https://docs.microsoft.com/en-us/azure/devops/pipelines/agents/v2-linux?view=azure-devops
 
+# Note: this script might be run as root or as a regular user, hence the use of sudo
+# alongside the use of the current user as the default admin_username
+
 agent_version=${1:-"$(cat /tmp/agent_version)"}
 agent_pat=${2:-"$(cat /tmp/agent_pat)"}
 pool_name=${3:-"$(cat /tmp/pool_name)"}
 azureorg=${4:-"$(cat /tmp/azureorg)"}
 project_name=${5:-"$(cat /tmp/project_name)"}
-workspace=${6:-"_work"}
+admin_username=${6:-"$(whoami)"}
+workspace=${7:-"_work"}
 
 echo "Installing Azure DevOps Agent '${agent_version}' on $HOSTNAME to join pool '${pool_name}' for project '${project_name}' in Azure Org '${azureorg}'"
 echo
@@ -39,22 +43,30 @@ mkdir azagent
 cd azagent
 curl -fkSL -o vstsagent.tar.gz https://vstsagentpackage.azureedge.net/agent/${agent_version}/vsts-agent-linux-x64-${agent_version}.tar.gz
 tar -zxvf vstsagent.tar.gz
+
+# Make sure the agent is owned by the current (admin) user
+# Note that this script might be run as root, so we need to make sure the agent is owned by the current user
+chown -R ${admin_username}. .
+
+# Ensure that all folders and files are readable and executable if they already have the eXecute flag
+chmod -R +rX /var/lib/waaagent
+
 if [ -x "$(command -v systemctl)" ]
 then
-    ./config.sh --unattended \
+    (sudo -u ${admin_username} ./config.sh --unattended \
         --pool ${pool_name} --acceptteeeula \
         --agent $HOSTNAME --url https://dev.azure.com/${azureorg}/ \
         --work ${workspace} --projectname ${project_name} \
-        --auth PAT --token ${agent_pat} --runasservice
+        --auth PAT --token ${agent_pat} --runasservice)
     sudo ./svc.sh install
     sudo ./svc.sh start
 else
-    ./config.sh --unattended \
+    (sudo -u ${admin_username} ./config.sh --unattended \
         --pool ${pool_name} --acceptteeeula \
         --agent $HOSTNAME --url https://dev.azure.com/${azureorg}/ \
         --work ${workspace} --projectname ${project_name} \
-        --auth PAT --token ${agent_pat}
-    ./run.sh
+        --auth PAT --token ${agent_pat})
+    (sudo -u ${admin_username} ./run.sh)
 fi
 
 # TODO define version
