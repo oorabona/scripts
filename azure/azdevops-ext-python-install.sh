@@ -1,7 +1,7 @@
 #!/bin/bash
 python_version=${1:-"$(cat /tmp/python_version)"}
 python_cmd=${2:-"python${python_version}"}
-toolset_path=${3:-"$(pwd)/azagent/_work/_tool"}
+toolset_path=${3:-"/agent/_work/_tool"}
 
 # Make sure we have all required parameters
 if [ -z "${python_version}" ]
