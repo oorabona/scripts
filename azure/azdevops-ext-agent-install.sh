@@ -49,7 +49,7 @@ tar -zxvf vstsagent.tar.gz
 chown -R ${admin_username}. .
 
 # Ensure that all folders and files are readable and executable if they already have the eXecute flag
-chmod -R +rX /var/lib/waaagent
+chmod -R +rX /var/lib/waagent
 
 if [ -x "$(command -v systemctl)" ]
 then
