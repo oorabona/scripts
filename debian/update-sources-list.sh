@@ -21,10 +21,8 @@ want_sources=${WANT_SOURCES:-0}
 want_nonfree=${WANT_NONFREE:-0}
 want_contrib=${WANT_CONTRIB:-0}
 want_backports=${WANT_BACKPORTS:-0}
-outfile="sources.list"
-arch=$(/usr/bin/dpkg --print-architecture)
-
-options="-o a:so:ncuSbh -l arch:,sources,outfile:,nonfree,contrib,updates,security,backports,help"
+default_outfile="$(pwd)/sources.list"
+default_arch=$(/usr/bin/dpkg --print-architecture)
 
 # misc functions
 log() {
@@ -34,16 +32,16 @@ log() {
 usage() {
 	log "Usage: $0 [OPTIONS] [ Release Codename ]"
 	log ""
-	log "Release Codename is optional and defaults to the current release."
+	log "Release Codename is optional and defaults to the current release ($1)."
 	log "Otherwise it refers to the release you want to generate the sources.list for."
 	log "e.g. $0 buster"
 	log "e.g. $0 stable"
 	log ""
 	log "Options:"
-	log "   -a, --arch             Use mirrors containing arch (default: $arch)"
+	log "   -a, --arch             Use mirrors containing arch (default: $2)"
 	log "   -s, --sources          Include deb-src lines in generated file (default: no)"
 	log "   -o, --outfile OUTFILE  Use OUTFILE as the output file"
-	log "                            (default: sources.list)"
+	log "                            (default: $3)"
 	log "   -n, --nonfree          Use also non-free packages in OUTFILE (default: no)"
 	log "   -c, --contrib          Use contributed packages (default: no)"
 	log "   -u, --updates          Use updates (default: yes)"
@@ -52,69 +50,75 @@ usage() {
 	log "   -h, --help             Display this help"
 }
 
-# commandline parsing
-temp=$(getopt $options -n 'update-sources-list.sh' -- "$@")
-if [ $? != 0 ]; then
-	echo "Terminating..." >&2
-	exit 2
-fi
-eval set -- "$temp"
-while true; do
+# Process options
+ARGPOS=()
+while [ $# -gt 0 ]; do
 	case "$1" in
-	-a | --arch)
+	--arch | -a)
 		arch=$2
 		shift 2
 		;;
-	-s | --sources)
+	--sources | -s)
 		want_sources=1
 		shift
 		;;
-	-o | --outfile)
-		outfile="$2"
+	--outfile | -o)
+		outfile=$2
 		shift 2
 		;;
-	-n | --nonfree)
+	--nonfree | -n)
 		want_nonfree=1
 		shift
 		;;
-	-c | --contrib)
+	--contrib | -c)
 		want_contrib=1
 		shift
 		;;
-	-u | --updates)
+	--updates | -u)
 		want_updates=1
 		shift
 		;;
-	-S | --security)
-		want_security=1
-		shift
-		;;
-	-b | --backports)
+	--backports | -b)
 		want_backports=1
 		shift
 		;;
-	-h | --help)
-		usage
-		exit 0
-		;;
-	--)
+	--help | -h)
+		want_help=1
 		shift
-		break
 		;;
 	*)
-		echo "Internal Error!"
-		echo "args: $@"
-		exit 1
+		ARGPOS+=("$1")
+		shift
 		;;
 	esac
 done
 
-# check if we have a release codename
-release=${1:-$(lsb_release -sc)}
+# Process positional arguments
+if [ -n "${ARGPOS[0]}" ]; then
+	release=${ARGPOS[0]}
+else
+	release=$(lsb_release -cs)
+fi
+
+if [ -n "$want_help" ]; then
+	usage "$release" "$default_arch" "$default_outfile"
+	exit 0
+fi
+
+if [ -n "$arch" ]; then
+	log "Using architecture $arch."
+else
+	log "Using default architecture $default_arch."
+fi
+
+if [ -n "$outfile" ]; then
+	log "Using outfile $outfile."
+else
+	log "Using default outfile $default_outfile."
+	outfile=$default_outfile
+fi
 
 log "Using distribution $release."
-
-log "Writing $outfile."
 
 if [ -f "$outfile" ]; then
 	backupOutfile="$outfile.$(date +%s)"
@@ -144,7 +148,12 @@ IFS=,
 (
 	echo "# Debian packages for $release"
 	for s in $stream; do
-		echo -n "deb ${host}"
+		echo -n "deb "
+		# Support for multi arch
+		if [ -n "$arch" ]; then
+			echo -n "[arch=${arch}] "
+		fi
+		echo -n "${host}"
 		if [ "$s" = "-security" ]; then
 			echo -n "$s"
 		fi
