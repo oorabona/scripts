@@ -1,0 +1,3 @@
+@@ -32 +32 @@
+-CONFIG_LOCALVERSION="-microsoft-standard-WSL2"
++CONFIG_LOCALVERSION="-microsoft-standard-wsl2"

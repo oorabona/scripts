@@ -1,0 +1,3 @@
+@@ -1680 +1680 @@
+-# CONFIG_BLK_DEV_NBD is not set
++CONFIG_BLK_DEV_NBD=y

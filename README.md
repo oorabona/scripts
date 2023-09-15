@@ -8,7 +8,8 @@ List of scripts and their installation instructions.
 
 - [Update Debian APT sources.list file](debian/update-sources-list.sh.md)
 - [OpenVPN setup](openvpn/README.md)
+- [Build WSL2 kernel](wsl/README.md)
 
-# License
+## License
 
 MIT License [here](LICENSE)
