@@ -1179,6 +1179,35 @@ function newClient() {
 	echo ""
 	echo "The configuration file has been written to $homeDir/$CLIENT.ovpn."
 	echo "Download the .ovpn file and import it in your OpenVPN client."
+
+	# If temporary web server has been activated, display the link to the client config
+	if [[ "$WEB_SERVER" == "y" ]]; then
+		echo ""
+		echo "You asked to activate a temporary web server to download the client config."
+		echo "NOTE: After you download your client config, http server will be shut down!"
+
+		# Check if we have `nc` installed
+		if [[ ! -x "$(command -v nc)" ]]; then
+			echo "ERROR: netcat is not installed. Please install it and try again."
+			exit 1
+		fi
+
+		FILE_PATH="$homeDir/$CLIENT.ovpn"
+		FILE_NAME=$(basename "$FILE_PATH")
+
+		CONTENT_TYPE="application/text"
+		
+		echo ""
+		echo "If you want to use the temporary web server, you can download the configuration file from:"
+		echo "http://${IPV4_NETWORK}.${SERVER_HOST}/$CLIENT.ovpn"
+
+		# Start a temporary web server to serve the client config
+		{
+			echo -ne "HTTP/1.1 200 OK\r\nContent-Length: $(wc -c <$FILE_PATH)\r\nContent-Type: $CONTENT_TYPE\r\nContent-Disposition: attachment; fileName=\"$FILE_NAME\"\r\nAccept-Ranges: bytes\r\n\r\n"; cat "$FILE_PATH";
+		} | nc -w0 -l ${WEB_SERVER_PORT} -q0
+
+		echo "HTTP server has been shut down."
+	fi
 }
 
 function revokeClient() {
