@@ -693,16 +693,6 @@ function installOpenVPN() {
 		updateEasyRSA
 
 		cd /etc/openvpn/easy-rsa/ || return
-		echo "set_var EASYRSA_VERSION ${version}" > vars
-		case $CERT_TYPE in
-		1)
-			echo "set_var EASYRSA_ALGO ec" >>vars
-			echo "set_var EASYRSA_CURVE $CERT_CURVE" >>vars
-			;;
-		2)
-			echo "set_var EASYRSA_KEY_SIZE $RSA_KEY_SIZE" >>vars
-			;;
-		esac
 
 		# Generate a random, alphanumeric identifier of 16 characters for CN and one for server name
 		SERVER_CN="cn_$(head /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 16 | head -n 1)"
@@ -710,11 +700,27 @@ function installOpenVPN() {
 		SERVER_NAME="server_$(head /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 16 | head -n 1)"
 		echo "$SERVER_NAME" >SERVER_NAME_GENERATED
 
-		echo "set_var EASYRSA_REQ_CN $SERVER_CN" >>vars
+		# Configure EasyRSA via env vars (compatible with 3.0.x and 3.1+)
+		export EASYRSA_REQ_CN="$SERVER_CN"
+		case $CERT_TYPE in
+		1)
+			export EASYRSA_ALGO="ec"
+			export EASYRSA_CURVE="$CERT_CURVE"
+			;;
+		2)
+			export EASYRSA_KEY_SIZE="$RSA_KEY_SIZE"
+			;;
+		esac
 
-		# Create the PKI, set up the CA, the DH params and the server certificate
+		# Initialize PKI and build certificates
 		./easyrsa init-pki
 		./easyrsa --batch build-ca nopass
+
+		# Store version + config in pki/vars for tracking and later reads
+		{
+			echo "set_var EASYRSA_VERSION $LATEST_EASYRSA_VERSION"
+			echo "set_var EASYRSA_REQ_CN $SERVER_CN"
+		} > pki/vars
 
 		if [[ $DH_TYPE == "2" ]]; then
 			# ECDH keys are generated on-the-fly so we don't need to generate them beforehand
@@ -1131,8 +1137,8 @@ function newClient() {
 		# Ensure the otp folder is present
 		[ -d /etc/openvpn/otp ] || mkdir -p /etc/openvpn/otp
 
-		# Get SERVER_CN from easyrsa using sed
-		SERVER_CN=$(sed -n 's/^set_var EASYRSA_REQ_CN[[:space:]]*//p' /etc/openvpn/easy-rsa/vars)
+		# Get SERVER_CN from the generated file (source of truth)
+		SERVER_CN=$(cat /etc/openvpn/easy-rsa/SERVER_CN_GENERATED)
 
 		# Everything needed is in the image, save to $CLIENT.google_authenticator file in /etc/openvpn/otp
 		if [[ "$AUTO_INSTALL" == "y" ]]; then
@@ -1298,15 +1304,13 @@ function updateEasyRSA() {
 	fi
 
 	# Get the current EasyRSA version
-	# We cannot use grep -Po because it's not available on all systems, use sed instead
-	# First, check if we currently have a folder /etc/openvpn/easy-rsa
+	# Check pki/vars first (3.1+ layout), then legacy vars (3.0.x)
 	CURRENT_EASYRSA_VERSION="unknown"
 	if [[ -d /etc/openvpn/easy-rsa ]]; then
-		# If we have a folder, check if it contains the file vars
-		if [[ -f /etc/openvpn/easy-rsa/vars ]]; then
-			# If we have the file vars, get the version from it
-			CURRENT_EASYRSA_VERSION=$(sed -rn 's/^set_var EASYRSA_VERSION\s+(.+)$/\1/p' /etc/openvpn/easy-rsa/vars)
-			# If we could not get the version, set it to unknown
+		local vars_file="/etc/openvpn/easy-rsa/pki/vars"
+		[[ -f "$vars_file" ]] || vars_file="/etc/openvpn/easy-rsa/vars"
+		if [[ -f "$vars_file" ]]; then
+			CURRENT_EASYRSA_VERSION=$(sed -rn 's/^set_var EASYRSA_VERSION\s+(.+)$/\1/p' "$vars_file")
 			if [[ -z $CURRENT_EASYRSA_VERSION ]]; then
 				CURRENT_EASYRSA_VERSION="unknown"
 			fi
@@ -1326,11 +1330,13 @@ function updateEasyRSA() {
 	# Download the latest EasyRSA version
 	installEasyRSA "$LATEST_EASYRSA_VERSION"
 
-	# Append the version if not already installed, otherwise replace it
+	# Write version to the appropriate vars file (pki/vars for 3.1+, legacy vars for 3.0.x)
+	local vars_file="/etc/openvpn/easy-rsa/pki/vars"
+	[[ -d /etc/openvpn/easy-rsa/pki ]] || vars_file="/etc/openvpn/easy-rsa/vars"
 	if [[ "$CURRENT_EASYRSA_VERSION" == "unknown" ]]; then
-		echo "set_var EASYRSA_VERSION $LATEST_EASYRSA_VERSION" >>/etc/openvpn/easy-rsa/vars
+		echo "set_var EASYRSA_VERSION $LATEST_EASYRSA_VERSION" >>"$vars_file"
 	else
-		sed -i "s/^set_var EASYRSA_VERSION\s+.*/set_var EASYRSA_VERSION $LATEST_EASYRSA_VERSION/" /etc/openvpn/easy-rsa/vars
+		sed -i "s/^set_var EASYRSA_VERSION\s+.*/set_var EASYRSA_VERSION $LATEST_EASYRSA_VERSION/" "$vars_file"
 	fi
 
 	# Tell user that the update was successful
